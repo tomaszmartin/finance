@@ -6,20 +6,8 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.contrib.hooks.gcs_hook import GoogleCloudStorageHook
-import requests
 
-
-def get_stocks(instrument: str, execution_date: dt.date) -> bytes:
-    type_map = {"equities": "10", "indices": "1"}
-    params = {
-        "type": type_map[instrument],
-        "instrument": "",
-        "date": execution_date.strftime("%d-%m-%Y"),
-    }
-    url = f"https://www.gpw.pl/price-archive-full"
-    resp = requests.get(url, params=params)
-    resp.raise_for_status()
-    return resp.content
+from app.scrapers import stocks
 
 
 def download(
@@ -28,7 +16,7 @@ def download(
     logger = logging.getLogger("airflow.task")
     logger.info("Downloading %s data for %s", instrument, execution_date)
     name = f"stocks/raw/{instrument}/{execution_date.year}/{execution_date.strftime('%Y-%m-%d')}.html"
-    stocks_data = get_stocks(instrument, execution_date)
+    stocks_data = stocks.get_stocks(instrument, execution_date)
     storage_hook = GoogleCloudStorageHook(google_cloud_storage_conn_id="google_cloud")
     storage_hook.upload(bucket_name, object_name=name, data=stocks_data)
 

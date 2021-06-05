@@ -1,4 +1,4 @@
-from app.dags import stocks
+from app.scrapers import stocks
 
 
 def test_extraction(sample_indices):
