@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import requests
 from bs4 import BeautifulSoup
@@ -20,13 +20,16 @@ def get_stocks(instrument: str, execution_date: dt.date) -> bytes:
     return resp.content
 
 
-def parse_stocks(stocks_data: bytes):
+def parse_stocks(stocks_data: bytes, date: dt.datetime):
     soup = BeautifulSoup(stocks_data, "lxml")
     column_names = get_column_names(soup)
     main = soup.select(".mainContainer")[0]
     rows = main.select("tr")
+    records: List[Dict[str, Any]] = []
     records = [parse_row(row, column_names) for row in rows]
     records = [rec for rec in records if rec]
+    for record in records:
+        record["date"] = date
     return records
 
 

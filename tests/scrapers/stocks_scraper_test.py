@@ -10,18 +10,19 @@ def test_getting_stocks(sample_equities):
 
 
 def test_parsing_stocks(sample_equities):
-    data, _ = sample_equities
-    parsed = stocks.parse_stocks(data)
+    data, execution_date = sample_equities
+    parsed = stocks.parse_stocks(data, execution_date)
     assert len(parsed) == 431
     assert parsed[0] == {
-        "closing_price": 1.6300,
-        "currency": "PLN",
-        "isin_code": "PLNFI0600010",
-        "maximum_price": 1.6900,
-        "minimum_price": 1.5500,
+        "date": execution_date,
         "name": "06MAGNA",
-        "number_of_transactions": 195.0,
+        "isin_code": "PLNFI0600010",
+        "currency": "PLN",
         "opening_price": 1.5500,
+        "closing_price": 1.6300,
+        "minimum_price": 1.5500,
+        "maximum_price": 1.6900,
+        "number_of_transactions": 195.0,
         "trade_volume": 197098.0,
         "turnover_value": 319910.0,
     }
