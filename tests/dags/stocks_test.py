@@ -1,8 +1,9 @@
-import datetime as dt
 from app.dags import stocks
 
 
-def test_extraction():
-    data = stocks.get_stocks("equities", dt.datetime(2020, 1, 1))
+def test_extraction(sample_indices):
+    result, datetime = sample_indices
+    data = stocks.get_stocks("indices", datetime)
     assert data is not None
-    assert len(data) == 61060
+    assert len(data) == 91408
+    assert len(data) == len(result)
