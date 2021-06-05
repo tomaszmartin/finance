@@ -9,11 +9,7 @@ from airflow.contrib.hooks.gcs_hook import GoogleCloudStorageHook
 import requests
 
 
-def download(
-    instrument: str, execution_date: dt.date, bucket_name, **context: Dict[str, Any]
-) -> None:
-    logger = logging.getLogger("airflow.task")
-    logger.info("Downloading %s data for %s", instrument, execution_date)
+def get_stocks(instrument: str, execution_date: dt.date) -> bytes:
     type_map = {"equities": "10", "indices": "1"}
     params = {
         "type": type_map[instrument],
@@ -21,17 +17,26 @@ def download(
         "date": execution_date.strftime("%d-%m-%Y"),
     }
     url = f"https://www.gpw.pl/price-archive-full"
-    name = f"stocks/raw/{instrument}/{execution_date.year}/{execution_date.strftime('%Y-%m-%d')}.html"
     resp = requests.get(url, params=params)
     resp.raise_for_status()
+    return resp.content
+
+
+def download(
+    instrument: str, execution_date: dt.date, bucket_name, **context: Dict[str, Any]
+) -> None:
+    logger = logging.getLogger("airflow.task")
+    logger.info("Downloading %s data for %s", instrument, execution_date)
+    name = f"stocks/raw/{instrument}/{execution_date.year}/{execution_date.strftime('%Y-%m-%d')}.html"
+    stocks_data = get_stocks(instrument, execution_date)
     storage_hook = GoogleCloudStorageHook(google_cloud_storage_conn_id="google_cloud")
-    storage_hook.upload(bucket_name, object_name=name, data=resp.content)
+    storage_hook.upload(bucket_name, object_name=name, data=stocks_data)
 
 
 stocks_dag = DAG(
-    dag_id="stocks_to_cloud",
+    dag_id="stocks_to_gcs",
     schedule_interval="@daily",
-    start_date=dt.datetime(2021, 6, 1),
+    start_date=dt.datetime(2021, 1, 1),
 )
 
 start_task = DummyOperator(task_id="start", dag=stocks_dag)
