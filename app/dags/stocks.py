@@ -33,7 +33,8 @@ def get_table_schema(instrument: str) -> List[Dict[str, str]]:
     return schemas[instrument]
 
 
-def create_table(bq_hook: BigQueryHook, dataset_id: str, instrument: str) -> None:
+def create_table(dataset_id: str, instrument: str) -> None:
+    bq_hook = BigQueryHook(gcp_conn_id="google_cloud")
     bq_hook.create_empty_dataset(
         dataset_id=dataset_id,
         exists_ok=True,
@@ -75,7 +76,6 @@ def parse(
     stocks_data = storage_hook.download(object_name=name, bucket_name=bucket_name)
     parsed_data = stocks.parse_stocks(stocks_data, execution_date)
     bq_hook = BigQueryHook(gcp_conn_id="google_cloud")
-    create_table(bq_hook, dataset_id, instrument)
     bq_hook.insert_all(dataset_id=dataset_id, table_id=instrument, rows=parsed_data)
 
 
@@ -90,6 +90,13 @@ download_equities = PythonOperator(
     dag=stocks_dag,
     python_callable=download,
     op_kwargs={"instrument": "equities", "bucket_name": "sandbox_data_lake"},
+)
+
+create_equities_table = PythonOperator(
+    task_id="create_equities_table",
+    dag=stocks_dag,
+    python_callable=create_table,
+    op_kwargs={"instrument": "equities", "dataset_id": "stocks"},
 )
 
 equities_to_bigquery = PythonOperator(
@@ -110,4 +117,5 @@ download_indices = PythonOperator(
     op_kwargs={"instrument": "indices", "bucket_name": "sandbox_data_lake"},
 )
 
-download_equities >> equities_to_bigquery
+download_equities >> create_equities_table
+create_equities_table >> equities_to_bigquery
