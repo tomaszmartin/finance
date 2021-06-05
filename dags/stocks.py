@@ -3,13 +3,14 @@ from typing import Dict, Any
 import logging
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator, task
+from airflow.operators.python import PythonOperator
 from airflow.operators.dummy import DummyOperator
+from airflow.contrib.hooks.gcs_hook import GoogleCloudStorageHook
 import requests
 
 
 def download(
-    instrument: str, execution_date: dt.date, **context: Dict[str, Any]
+    instrument: str, execution_date: dt.date, bucket_name, **context: Dict[str, Any]
 ) -> None:
     logger = logging.getLogger("airflow.task")
     logger.info("Downloading %s data for %s", instrument, execution_date)
@@ -20,14 +21,15 @@ def download(
         "date": execution_date.strftime("%d-%m-%Y"),
     }
     url = f"https://www.gpw.pl/price-archive-full"
-    path = f"data/raw/{instrument}/{execution_date.year}/{execution_date.strftime('%Y-%m-%d')}.html"
+    name = f"stocks/raw/{instrument}/{execution_date.year}/{execution_date.strftime('%Y-%m-%d')}.html"
     resp = requests.get(url, params=params)
-    with open(path, "wb") as file:
-        file.write(resp.content)
+    resp.raise_for_status()
+    storage_hook = GoogleCloudStorageHook(google_cloud_storage_conn_id="google_cloud")
+    storage_hook.upload(bucket_name, object_name=name, data=resp.content)
 
 
 stocks_dag = DAG(
-    dag_id="stocks_dag",
+    dag_id="stocks_to_cloud",
     schedule_interval="@daily",
     start_date=dt.datetime(2021, 6, 1),
 )
@@ -38,14 +40,14 @@ download_equities = PythonOperator(
     task_id="download_equities",
     dag=stocks_dag,
     python_callable=download,
-    op_kwargs={"instrument": "equities"},
+    op_kwargs={"instrument": "equities", "bucket_name": "sandbox_data_lake"},
 )
 
 download_indices = PythonOperator(
     task_id="download_indices",
     dag=stocks_dag,
     python_callable=download,
-    op_kwargs={"instrument": "indices"},
+    op_kwargs={"instrument": "indices", "bucket_name": "sandbox_data_lake"},
 )
 
 start_task >> download_equities
