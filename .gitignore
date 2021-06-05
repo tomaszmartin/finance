@@ -1,6 +1,7 @@
 # Project specific stuff
 *.DS_Store
 data
+logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -111,7 +112,6 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
 env/
 venv/
 ENV/
