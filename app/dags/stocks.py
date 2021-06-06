@@ -6,6 +6,7 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.contrib.hooks.bigquery_hook import BigQueryHook
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
+from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOperator
 
 from app.scrapers import stocks
 
@@ -115,5 +116,14 @@ for instrument in ["equities", "indices"]:
             "bucket_name": "sandbox_data_lake",
         },
     )
+    verify_data = BigQueryCheckOperator(
+        task_id=f"verify_{instrument}",
+        dag=stocks_dag,
+        gcp_conn_id=GCP_CONN_ID,
+        sql='SELECT SUM(turnover_value) from {{params.table}} where date = "{{ds}}"',
+        params={"table": f"{DATASET_ID}.{instrument}"},
+        use_legacy_sql=False,
+    )
     download_task >> to_bigquery_task
     create_table_task >> to_bigquery_task
+    to_bigquery_task >> verify_data
