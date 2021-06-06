@@ -8,3 +8,9 @@ from pytest import fixture
 def sample_equities() -> Tuple[bytes, dt.datetime]:
     with open("tests/samples/equities.html", "rb") as file:
         return file.read(), dt.datetime(2021, 1, 4)
+
+
+@fixture
+def sample_indices() -> Tuple[bytes, dt.datetime]:
+    with open("tests/samples/indices.html", "rb") as file:
+        return file.read(), dt.datetime(2021, 1, 4)

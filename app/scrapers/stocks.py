@@ -23,7 +23,7 @@ def get_stocks(instrument: str, execution_date: dt.date) -> bytes:
 def parse_stocks(stocks_data: bytes, date: dt.datetime):
     soup = BeautifulSoup(stocks_data, "lxml")
     column_names = get_column_names(soup)
-    main = soup.select(".mainContainer")[0]
+    main = soup.select(".table.footable")[0]
     rows = main.select("tr")
     records: List[Dict[str, Any]] = []
     records = [parse_row(row, column_names) for row in rows]
@@ -51,13 +51,18 @@ def parse_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
     ]
     fields = row.find_all("td")
     record = {name: field.text.strip() for name, field in zip(column_names, fields)}
+    columns = list(record.keys())
     if not record:
         return {}
     for metric in metrics:
-        record[metric] = to_float(record[metric])
-    record["trade_volume"] = record.pop("trade_volume_(#)")
-    record["turnover_value"] = record.pop("turnover_value_(thou.)") * 1000
-    record.pop("%_price_change")
+        if metric in columns:
+            record[metric] = to_float(record[metric])
+    if "trade_volume_(#)" in columns:
+        record["trade_volume"] = record.pop("trade_volume_(#)")
+    if "turnover_value_(thou.)" in columns:
+        record["turnover_value"] = record.pop("turnover_value_(thou.)") * 1000
+    if "%_price_change" in columns:
+        record.pop("%_price_change")
     return record
 
 
