@@ -20,7 +20,7 @@ def get_stocks(instrument: str, execution_date: dt.date) -> bytes:
     return resp.content
 
 
-def parse_stocks(stocks_data: bytes, date: dt.datetime):
+def parse_stocks(stocks_data: bytes, datetime: dt.datetime):
     soup = BeautifulSoup(stocks_data, "lxml")
     column_names = get_column_names(soup)
     main = soup.select(".table.footable")[0]
@@ -29,7 +29,7 @@ def parse_stocks(stocks_data: bytes, date: dt.datetime):
     records = [parse_row(row, column_names) for row in rows]
     records = [rec for rec in records if rec]
     for record in records:
-        record["date"] = date
+        record["datetime"] = datetime
     return records
 
 

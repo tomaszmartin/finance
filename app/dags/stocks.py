@@ -12,7 +12,9 @@ from app.scrapers import stocks
 
 
 def generate_name(instrument: str, execution_date: dt.datetime):
-    return f"stocks/raw/{instrument}/{execution_date.year}/{execution_date.strftime('%Y-%m-%d')}.html"
+    directory = f"stocks/raw/{instrument}/{execution_date.year}/"
+    filename = f"{execution_date.isoformat()}.html"
+    return f"{directory}{filename}"
 
 
 def download(
@@ -43,7 +45,7 @@ def create_table(
         dataset_id=dataset_id,
         table_id=table_id,
         schema_fields=[
-            {"name": "date", "type": "DATETIME", "mode": "REQUIRED"},
+            {"name": "datetime", "type": "DATETIME", "mode": "REQUIRED"},
             {"name": "name", "type": "STRING", "mode": "REQUIRED"},
             {"name": "isin_code", "type": "STRING", "mode": "REQUIRED"},
             {"name": "currency", "type": "STRING", "mode": "REQUIRED"},
@@ -58,7 +60,7 @@ def create_table(
         exists_ok=True,
         time_partitioning={
             "type": "MONTH",
-            "field": "date",
+            "field": "datetime",
         },
     )
 
@@ -84,7 +86,7 @@ GCP_CONN_ID = "google_cloud"
 DATASET_ID = "stocks"
 
 stocks_dag = DAG(
-    dag_id="stocks_etl",
+    dag_id="download_stocks",
     # Run on workdays at 17:15
     schedule_interval="15 17 * * 1-5",
     start_date=dt.datetime(2021, 6, 1),
@@ -120,7 +122,7 @@ for instrument in ["equities", "indices"]:
         task_id=f"verify_{instrument}",
         dag=stocks_dag,
         gcp_conn_id=GCP_CONN_ID,
-        sql='SELECT SUM(turnover_value) from {{params.table}} where date = "{{ds}}"',
+        sql='SELECT datetime FROM {{params.table}} WHERE DATE(datetime) = "{{ds}}"',
         params={"table": f"{DATASET_ID}.{instrument}"},
         use_legacy_sql=False,
     )
