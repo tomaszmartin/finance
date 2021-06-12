@@ -1,0 +1,5 @@
+---
+- name: restart airflow-webserver
+  systemd:
+    name: airflow-webserver
+    state: restarted

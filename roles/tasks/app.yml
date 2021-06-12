@@ -1,0 +1,4 @@
+---
+- name: App | copy files
+- name: App | start webserver
+- name: App | start scheduler
