@@ -14,3 +14,12 @@ Things that need to be done when starting a project:
         `'"extra__google_cloud_platform__scope":  '`
             `'"https://www.googleapis.com/auth/cloud-platform"}'
     ```
+
+## Ansible
+
+`hosts.ini` file should have following format:
+
+```
+[cloud]
+sandbox ansible_host={ip} ansible_ssh_user={ssh user} ansible_ssh_private_key_file={ssh key}
+```
