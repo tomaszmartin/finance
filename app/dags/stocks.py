@@ -34,8 +34,10 @@ def download(
 def create_table(
     dataset_id: str,
     table_id: str,
+    gcp_conn_id: str,
+    **context: Dict[str, Any],
 ) -> None:
-    bq_hook = BigQueryHook(gcp_conn_id=GCP_CONN_ID)
+    bq_hook = BigQueryHook(gcp_conn_id=gcp_conn_id)
     bq_hook.create_empty_dataset(
         dataset_id=dataset_id,
         exists_ok=True,
@@ -70,15 +72,16 @@ def to_bigquery(
     instrument: str,
     execution_date: dt.datetime,
     bucket_name: str,
+    gcp_conn_id: str,
     **context: Dict[str, Any],
 ) -> None:
     logger = logging.getLogger("airflow.task")
     logger.info("Downloading %s data for %s", instrument, execution_date)
     name = generate_name(instrument, execution_date)
-    storage_hook = GCSHook(google_cloud_storage_conn_id=GCP_CONN_ID)
+    storage_hook = GCSHook(google_cloud_storage_conn_id=gcp_conn_id)
     stocks_data = storage_hook.download(object_name=name, bucket_name=bucket_name)
     parsed_data = stocks.parse_stocks(stocks_data, execution_date)
-    bq_hook = BigQueryHook(gcp_conn_id=GCP_CONN_ID)
+    bq_hook = BigQueryHook(gcp_conn_id=gcp_conn_id)
     bq_hook.insert_all(dataset_id=dataset_id, table_id=instrument, rows=parsed_data)
 
 
@@ -97,13 +100,18 @@ for instrument in ["equities", "indices"]:
         task_id=f"download_{instrument}",
         dag=stocks_dag,
         python_callable=download,
-        op_kwargs={"instrument": instrument, "bucket_name": "sandbox_data_lake"},
+        op_kwargs={
+            "gcp_conn_id": GCP_CONN_ID,
+            "instrument": instrument,
+            "bucket_name": "sandbox_data_lake",
+        },
     )
     create_table_task = PythonOperator(
         task_id=f"create_{instrument}_table",
         dag=stocks_dag,
         python_callable=create_table,
         op_kwargs={
+            "gcp_conn_id": GCP_CONN_ID,
             "dataset_id": DATASET_ID,
             "table_id": instrument,
         },
@@ -113,6 +121,7 @@ for instrument in ["equities", "indices"]:
         dag=stocks_dag,
         python_callable=to_bigquery,
         op_kwargs={
+            "gcp_conn_id": GCP_CONN_ID,
             "dataset_id": DATASET_ID,
             "instrument": instrument,
             "bucket_name": "sandbox_data_lake",
