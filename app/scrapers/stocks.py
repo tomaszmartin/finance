@@ -114,7 +114,7 @@ def parse_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
         return {}
     for metric in metrics:
         if metric in columns:
-            record[metric] = to_float(record[metric])
+            record[metric] = utils.to_float(record[metric])
 
     thou_columns = [
         "turnover_value_(thou.)",
@@ -134,27 +134,6 @@ def parse_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
         "theoretical__index__value": "theoretical_index_value",
         "cumulated__value_(thous_pln)": "cumulated_value",
     }
-    record = rename(record, rename_columns)
-    record = drop(record, ["%_price_change", "%_change", "%_opened_portfolio"])
+    record = utils.rename(record, rename_columns)
+    record = utils.drop(record, ["%_price_change", "%_change", "%_opened_portfolio"])
     return record
-
-
-def to_float(value: str) -> Optional[float]:
-    if value == "-":
-        return None
-    value = value.replace(",", "")
-    return float(value)
-
-
-def rename(the_dict, rename_keys):
-    for old_key, new_key in rename_keys.items():
-        if old_key in the_dict:
-            the_dict[new_key] = the_dict.pop(old_key)
-    return the_dict
-
-
-def drop(the_dict, columns):
-    for key in columns:
-        if key in the_dict:
-            the_dict.pop(key)
-    return the_dict

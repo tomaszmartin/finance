@@ -1,16 +1,31 @@
+import datetime as dt
+import hashlib
+
 from app.scrapers import stocks
 
 
-def test_getting_stocks(sample_equities):
-    data, datetime = sample_equities
+def test_getting_archives(archive_equities, archive_indices):
+    data, datetime = archive_equities
     result = stocks.get_archive("equities", datetime)
     assert result is not None
     assert len(result) == 357489
     assert len(result) == len(data)
+    data, datetime = archive_indices
+    result = stocks.get_archive("indices", datetime)
+    assert result is not None
+    assert len(result) == 91408
+    assert len(result) == len(data)
 
 
-def test_parsing_archive_equities(sample_equities):
-    data, execution_date = sample_equities
+def test_getting_current(realtime_equities):
+    result = stocks.get_current("equities", dt.datetime.now())
+    assert result is not None
+    result = stocks.get_current("indices", dt.datetime.now())
+    assert result is not None
+
+
+def test_parsing_archive_equities(archive_equities):
+    data, execution_date = archive_equities
     parsed = stocks.parse_archive(data, execution_date)
     assert len(parsed) == 431
     assert parsed[0] == {
@@ -28,8 +43,8 @@ def test_parsing_archive_equities(sample_equities):
     }
 
 
-def test_parsing_archive_indices(sample_indices):
-    data, execution_date = sample_indices
+def test_parsing_archive_indices(archive_indices):
+    data, execution_date = archive_indices
     parsed = stocks.parse_archive(data, execution_date)
     assert len(parsed) == 43
     assert parsed[0] == {
