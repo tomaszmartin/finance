@@ -3,18 +3,18 @@ from app.scrapers import stocks
 
 def test_getting_stocks(sample_equities):
     data, datetime = sample_equities
-    result = stocks.get_stocks("equities", datetime)
+    result = stocks.get_archive("equities", datetime)
     assert result is not None
     assert len(result) == 357489
     assert len(result) == len(data)
 
 
-def test_parsing_equities(sample_equities):
+def test_parsing_archive_equities(sample_equities):
     data, execution_date = sample_equities
-    parsed = stocks.parse_stocks(data, execution_date)
+    parsed = stocks.parse_archive(data, execution_date)
     assert len(parsed) == 431
     assert parsed[0] == {
-        "date": execution_date,
+        "date": execution_date.date(),
         "name": "06MAGNA",
         "isin_code": "PLNFI0600010",
         "currency": "PLN",
@@ -28,23 +28,63 @@ def test_parsing_equities(sample_equities):
     }
 
 
-def test_parsing_indices(sample_indices):
+def test_parsing_archive_indices(sample_indices):
     data, execution_date = sample_indices
-    parsed = stocks.parse_stocks(data, execution_date)
-    from pprint import pprint
-
-    pprint(parsed[0])
+    parsed = stocks.parse_archive(data, execution_date)
     assert len(parsed) == 43
     assert parsed[0] == {
-        "date": execution_date,
         "name": "CEEplus",
         "isin_code": "PL9999998948",
         "currency": "PLN",
         "opening_price": 0.0,
-        "closing_price": 993.95,
-        "minimum_price": 0.0,
         "maximum_price": 0.0,
+        "minimum_price": 0.0,
+        "closing_price": 993.95,
         "number_of_transactions": 0.0,
         "trade_volume": 0.0,
         "turnover_value": 0.0,
+        "date": execution_date.date(),
+    }
+
+
+def test_parsing_realtime_equities(realtime_equities):
+    data, execution_date = realtime_equities
+    parsed = stocks.parse_realtime(data, execution_date)
+    assert len(parsed) == 392
+    assert parsed[0] == {
+        "name": "06MAGNA",
+        "shortcut": "06N",
+        "isin_code": "PLNFI0600010",
+        "currency": "PLN",
+        "last_transaction_time": "17:00:00",
+        "reference_price": 2.3400,
+        "theoretical_open_price": None,
+        "open": 2.3350,
+        "low": 2.3350,
+        "high": 2.4750,
+        "closing": 2.4750,
+        "timestamp": 1625349600.0,
+        "corporate_actions": "",
+    }
+
+
+def test_parsing_realtime_indices(realtime_indices):
+    data, execution_date = realtime_indices
+    parsed = stocks.parse_realtime(data, execution_date)
+    assert len(parsed) == 43
+    from pprint import pprint
+
+    pprint(parsed[0])
+    assert parsed[0] == {
+        "index": "WIG20",
+        "number_of_companies": 20.0,
+        "time": "17:15:01",
+        "theoretical_index_value": None,
+        "open": 2258.56,
+        "min_price": 2249.91,
+        "max_price": 2269.40,
+        "value": 2252.18,
+        "isin_code": "PL9999999987",
+        "cumulated_value": 562248170.0,
+        "timestamp": 1625349600.0,
     }

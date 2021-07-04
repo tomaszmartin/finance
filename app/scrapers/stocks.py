@@ -1,5 +1,8 @@
 import datetime as dt
-from typing import Any, Dict, List
+import logging
+from typing import Any, Dict, List, Optional
+import urllib.parse as urlparse
+from urllib.parse import parse_qs
 
 import requests
 from bs4 import BeautifulSoup
@@ -7,7 +10,7 @@ from bs4 import BeautifulSoup
 from app import utils
 
 
-def get_stocks(instrument: str, execution_date: dt.date) -> bytes:
+def get_archive(instrument: str, execution_date: dt.date) -> bytes:
     type_map = {"equities": "10", "indices": "1"}
     params = {
         "type": type_map[instrument],
@@ -20,7 +23,17 @@ def get_stocks(instrument: str, execution_date: dt.date) -> bytes:
     return resp.content
 
 
-def parse_stocks(stocks_data: bytes, datetime: dt.datetime):
+def get_current(instrument: str, execution_date: dt.date) -> bytes:
+    type_map = {
+        "equities": "https://www.gpw.pl/shares-and-rights-to-shares",
+        "indices": "https://gpwbenchmark.pl/ajaxindex.php?action=GPWIndexes&start=showTable&tab=all&lang=EN&format=html",
+    }
+    resp = requests.get(type_map[instrument])
+    resp.raise_for_status()
+    return resp.content
+
+
+def parse_archive(stocks_data: bytes, datetime: dt.datetime):
     soup = BeautifulSoup(stocks_data, "lxml")
     column_names = get_column_names(soup)
     main = soup.select(".table.footable")[0]
@@ -29,7 +42,20 @@ def parse_stocks(stocks_data: bytes, datetime: dt.datetime):
     records = [parse_row(row, column_names) for row in rows]
     records = [rec for rec in records if rec]
     for record in records:
-        record["datetime"] = datetime
+        record["date"] = datetime.date()
+    return records
+
+
+def parse_realtime(stocks_data: bytes, datetime: dt.datetime):
+    soup = BeautifulSoup(stocks_data, "lxml")
+    main = soup.select(".table")[-1]  # HERE
+    column_names = get_column_names(main)[:12]
+    rows = main.select("tr:not(.footable-group-row):not(.summary)")[1:]  # HERE
+    records: List[Dict[str, Any]] = []
+    records = [parse_realtime_row(row, column_names) for row in rows]
+    records = [rec for rec in records if rec]
+    for record in records:
+        record["timestamp"] = datetime.timestamp()
     return records
 
 
@@ -39,15 +65,47 @@ def get_column_names(soup: BeautifulSoup) -> List[str]:
     return columns_names
 
 
+def parse_realtime_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
+    link = row.find_all("a")[1]
+    url_address = "https://www.gpw.pl/" + link["href"]
+    parsed = urlparse.urlparse(url_address)
+    isin_code = parse_qs(parsed.query)["isin"][0]
+    record = parse_row(row, column_names)
+    record["isin_code"] = isin_code
+    record.pop("")
+    return record
+
+
 def parse_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
     metrics = [
         "closing_price",
         "opening_price",
         "maximum_price",
         "minimum_price",
+        "max_price",
+        "min_price",
         "trade_volume_(#)",
         "number_of_transactions",
         "turnover_value_(thou.)",
+        "cumulated__value_(thous_pln)",
+        "cumulated_value(pln_thous.)",
+        "best_ask",
+        "best_bid",
+        "cumulated_volume",
+        "theoretical_open_price",
+        "theoretical__index__value",
+        "high",
+        "last_/__closing",
+        "last_volume",
+        "limit",
+        "low",
+        "no._of_orders",
+        "number_of_trades",
+        "open",
+        "reference_price",
+        "volume",
+        "value",
+        "number_of_companies",
     ]
     fields = row.find_all("td")
     record = {name: field.text.strip() for name, field in zip(column_names, fields)}
@@ -57,15 +115,46 @@ def parse_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
     for metric in metrics:
         if metric in columns:
             record[metric] = to_float(record[metric])
-    if "trade_volume_(#)" in columns:
-        record["trade_volume"] = record.pop("trade_volume_(#)")
-    if "turnover_value_(thou.)" in columns:
-        record["turnover_value"] = record.pop("turnover_value_(thou.)") * 1000
-    if "%_price_change" in columns:
-        record.pop("%_price_change")
+
+    thou_columns = [
+        "turnover_value_(thou.)",
+        "cumulated_value(pln_thous.)",
+        "cumulated__value_(thous_pln)",
+    ]
+    for col in thou_columns:
+        if col in columns:
+            if record[col]:  # if not None
+                record[col] = record[col] * 1000.0
+
+    rename_columns = {
+        "trade_volume_(#)": "trade_volume",
+        "last_/__closing": "closing",
+        "turnover_value_(thou.)": "turnover_value",
+        "cumulated_value(pln_thous.)": "cumulated_value",
+        "theoretical__index__value": "theoretical_index_value",
+        "cumulated__value_(thous_pln)": "cumulated_value",
+    }
+    record = rename(record, rename_columns)
+    record = drop(record, ["%_price_change", "%_change", "%_opened_portfolio"])
     return record
 
 
-def to_float(value: str) -> float:
+def to_float(value: str) -> Optional[float]:
+    if value == "-":
+        return None
     value = value.replace(",", "")
     return float(value)
+
+
+def rename(the_dict, rename_keys):
+    for old_key, new_key in rename_keys.items():
+        if old_key in the_dict:
+            the_dict[new_key] = the_dict.pop(old_key)
+    return the_dict
+
+
+def drop(the_dict, columns):
+    for key in columns:
+        if key in the_dict:
+            the_dict.pop(key)
+    return the_dict
