@@ -26,3 +26,9 @@ def realtime_equities() -> Tuple[bytes, dt.datetime]:
 def realtime_indices() -> Tuple[bytes, dt.datetime]:
     with open("tests/samples/realitme_indices.html", "rb") as file:
         return file.read(), dt.datetime(2021, 7, 4)
+
+
+@fixture
+def archive_currencies() -> Tuple[bytes, dt.datetime]:
+    with open("tests/samples/currencies.xml", "rb") as file:
+        return file.read(), dt.datetime(2021, 7, 5)
