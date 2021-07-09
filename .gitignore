@@ -4,6 +4,8 @@ data
 logs/
 secrets/
 hosts.ini
+*.crt
+*.key
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

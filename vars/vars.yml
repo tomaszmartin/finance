@@ -1,6 +1,12 @@
 ---
-python_ver: 3.9
-app_home: /airflow
+python_version: 3.9
+app_home: /apps/stocks
+app_venv: "{{app_home}}/env"
+
+airflow_home: /opt/airflow
 app_user: airflow
 app_group: app
-airflow_executor: LocalExecutor
+
+airflow_executor: SequentialExecutor
+airflow_executable: "{{ app_venv }}/bin/airflow"
+airflow_version: 2.1.0

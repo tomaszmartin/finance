@@ -1,4 +1,16 @@
 ---
-- name: App | copy files
-- name: App | start webserver
-- name: App | start scheduler
+- name: Install python dependencies
+  become: true
+  become_user: "{{ app_user }}"
+  pip:
+    name: "{{item}}"
+    virtualenv: "{{ app_venv }}"
+    virtualenv_command: "python{{ python_version }} -m venv"
+  with_lines: cat ./requirements.txt
+
+- name: App | Copy files
+  become: true
+  become_user: "{{ app_user }}"
+  synchronize:
+    src: "./app/"
+    dest: "{{ app_home }}/app/"

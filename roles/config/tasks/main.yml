@@ -1,7 +1,0 @@
----
-- name: Airflow | setup database connection
-- name: Airflow | setup dag home
-- name: Airflow | setup users
-- name: Airflow | setup https for webserver
-- name: Airflow | setup fernet key
-- name: Airflow | init database

@@ -1,7 +1,16 @@
 ---
+- name: check
+  hosts: localhost
+  roles:
+    - local
+
 - name: run
   hosts: cloud
   gather_facts: true
-
   roles:
     - install
+    - airflow
+    - app
+
+  vars_files:
+    - ./vars/vars.yml

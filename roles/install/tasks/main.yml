@@ -14,15 +14,23 @@
     name: "*"
     state: latest
 
-- name: Install python{{ python_ver }}
+- name: Install acl
   become: true
   apt:
     name: "{{ item }}"
     state: present
   with_items:
-    - python{{ python_ver }}
-    - python{{ python_ver }}-dev
-    - python{{ python_ver }}-venv
+    - acl
+
+- name: Install python{{ python_version }}
+  become: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python{{ python_version }}
+    - python{{ python_version }}-dev
+    - python{{ python_version }}-venv
     - python3-pip
 
 - name: Add app users group
@@ -63,13 +71,4 @@
     name: pip
     extra_args: --upgrade
     virtualenv: "{{ app_home }}/env"
-    virtualenv_command: "python{{ python_ver }} -m venv"
-
-- name: Install python dependencies
-  become: true
-  become_user: "{{ app_user }}"
-  pip:
-    name: "{{item}}"
-    virtualenv: "{{ app_home }}/env"
-    virtualenv_command: "python{{ python_ver }} -m venv"
-  with_lines: cat ./requirements.txt
+    virtualenv_command: "python{{ python_version }} -m venv"

@@ -1,5 +1,4 @@
 Cython==0.29.23
-apache-airflow==2.1.0
 apache-airflow-providers-google==4.0.0
 beautifulsoup4==4.9.3
 black==20.8b1
