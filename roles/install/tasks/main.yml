@@ -1,5 +1,5 @@
 ---
-- name: Add deadsnakes repository
+- name: Add apt repositories
   become: true
   apt_repository:
     repo: "{{ item }}"
@@ -14,27 +14,62 @@
     name: "*"
     state: latest
 
-- name: Install python3.8 packages
+- name: Install python{{ python_ver }}
   become: true
   apt:
     name: "{{ item }}"
     state: present
   with_items:
-    - python3.8
-    - python3.8-dev
-    - python3.8-venv
+    - python{{ python_ver }}
+    - python{{ python_ver }}-dev
+    - python{{ python_ver }}-venv
     - python3-pip
 
+- name: Add app users group
+  become: true
+  become_method: sudo
+  group:
+    name: "{{ app_group }}"
+    state: present
+
+- name: Add app user
+  become: true
+  become_method: sudo
+  user:
+    name: "{{ app_user }}"
+    state: present
+
+- name: Add ssh user to app group
+  become: true
+  user:
+    name: "{{ ansible_ssh_user }}"
+    groups: "{{ app_group }}"
+    append: yes
+
+- name: Ensure app home directory
+  become: true
+  become_method: sudo
+  file:
+    path: "{{ app_home }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0775
+    state: directory
+
 - name: Upgrade pip
+  become: true
+  become_user: "{{ app_user }}"
   pip:
     name: pip
     extra_args: --upgrade
-    virtualenv: /home/{{ app_user }}/env
-    virtualenv_command: "python3.8 -m venv"
+    virtualenv: "{{ app_home }}/env"
+    virtualenv_command: "python{{ python_ver }} -m venv"
 
 - name: Install python dependencies
+  become: true
+  become_user: "{{ app_user }}"
   pip:
     name: "{{item}}"
-    virtualenv: /home/{{ app_user }}/env
-    virtualenv_command: "python3.8 -m venv"
+    virtualenv: "{{ app_home }}/env"
+    virtualenv_command: "python{{ python_ver }} -m venv"
   with_lines: cat ./requirements.txt

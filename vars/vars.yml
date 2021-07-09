@@ -1,0 +1,6 @@
+---
+python_ver: 3.9
+app_home: /airflow
+app_user: airflow
+app_group: app
+airflow_executor: LocalExecutor
