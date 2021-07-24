@@ -1,0 +1,53 @@
+---
+- name: Server | Add apt repositories
+  become: true
+  apt_repository:
+    repo: "{{ item }}"
+    update_cache: true
+  with_items:
+    - ppa:deadsnakes/ppa
+
+- name: Server | Upgrade apt packages
+  become: true
+  become_method: sudo
+  apt:
+    name: "*"
+    state: latest
+
+- name: Server | Install acl
+  become: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - acl
+
+- name: Server | Install python{{ python_version }}
+  become: true
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - python{{ python_version }}
+    - python{{ python_version }}-dev
+    - python{{ python_version }}-venv
+    - python3-pip
+
+- name: Server | Ensure app home directory
+  become: true
+  become_method: sudo
+  file:
+    path: "{{ app_home }}"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: 0775
+    state: directory
+
+- name: Server | Upgrade pip
+  become: true
+  become_user: "{{ app_user }}"
+  pip:
+    name: pip
+    extra_args: --upgrade
+    virtualenv: "{{ venv_dir }}"
+    virtualenv_command: "{{ venv_cmd }}"

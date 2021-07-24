@@ -1,0 +1,16 @@
+---
+- name: App | Install python dependencies
+  become: true
+  become_user: "{{ app_user }}"
+  pip:
+    name: "{{item}}"
+    virtualenv: "{{ venv_dir }}"
+    virtualenv_command: "{{ venv_cmd }}"
+  with_lines: cat ./requirements.txt
+
+- name: App | Copy files
+  become: true
+  become_user: "{{ app_user }}"
+  synchronize:
+    src: "./app/"
+    dest: "{{ app_home }}/app/"

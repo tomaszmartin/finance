@@ -1,0 +1,7 @@
+---
+gcp_region: europe-west4
+gcp_zone: europe-west4-a
+gcp_cred_file: secrets/gcp.json
+gcp_instance_name: airflow-master
+gcp_instance_type: e2-small
+gcp_tag_name: allow-airflow

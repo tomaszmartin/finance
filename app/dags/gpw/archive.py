@@ -12,7 +12,6 @@ from app.scrapers import stocks
 from app.operators.scraping import (
     FileToBucketOperator,
     BucketFileToBigQueryOperator,
-    BucketFileToFirestoreOperator,
 )
 
 
@@ -20,6 +19,7 @@ def create_table(
     dataset_id: str,
     table_id: str,
     gcp_conn_id: str,
+    **context: Dict[str, Any],
 ) -> None:
     bq_hook = BigQueryHook(gcp_conn_id=gcp_conn_id)
     bq_hook.create_empty_dataset(

@@ -1,0 +1,11 @@
+[core]
+dags_folder = {{ app_home }}/app/dags
+executor = {{ airflow_executor }}
+load_examples = False
+
+sql_alchemy_conn={{ airflow_db_conn }}
+fernet_key={{ airflow_fernet_key }}
+
+[webserver]
+web_server_ssl_cert={{ app_home }}/ssl.crt
+web_server_ssl_key={{ app_home }}/ssl.key

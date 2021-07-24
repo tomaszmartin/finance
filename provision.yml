@@ -1,0 +1,9 @@
+---
+- name: provision
+  hosts: localhost
+  roles:
+    - provision
+
+  vars_files:
+    - ./vars/gcp.yml
+    - ./secrets/vars.yml
