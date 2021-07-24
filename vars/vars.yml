@@ -2,11 +2,16 @@
 python_version: 3.9
 app_home: /apps/stocks
 app_venv: "{{app_home}}/env"
-
-airflow_home: /opt/airflow
 app_user: airflow
 app_group: app
 
+airflow_home: /opt/airflow
 airflow_executor: SequentialExecutor
 airflow_executable: "{{ app_venv }}/bin/airflow"
+airflow_config: "{{ airflow_home }}/airflow.cfg"
 airflow_version: 2.1.0
+
+env_var_python_path: "{{ app_home }}:$PYTHONPATH"
+env_var_path: "{{ venv_dir }}/bin:$PATH"
+venv_dir: "{{ app_home }}/env"
+venv_cmd: "python{{python_version}} -m venv"

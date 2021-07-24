@@ -1,0 +1,12 @@
+---
+- name: Monitoring | Populate service facts
+  service_facts:
+
+- name: Monitoring | Install monitoring agent
+  become: true
+  command: "{{ item }}"
+  with_items:
+    - curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh
+    - sudo bash add-monitoring-agent-repo.sh --also-install
+    - sudo service stackdriver-agent start
+  when: "'stackdriver-agent' not in ansible_facts.services"

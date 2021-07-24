@@ -67,21 +67,10 @@
     - airflow-webserver
     - airflow-scheduler
 
-- name: Airflow | Start services
-  become: true
-  become_method: sudo
-  systemd:
-    name: "{{ item }}"
-    state: started
-    enabled: yes
-  with_items:
-    - airflow-webserver
-    - airflow-scheduler
-
 - name: Airflow | Copy certificate files
   become: true
   synchronize:
-    src: "./{{ item }}"
+    src: "./secrets/{{ item }}"
     dest: "{{ app_home }}"
   with_items:
     - ssl.crt
@@ -125,3 +114,14 @@
   no_log: true
   environment:
     AIRFLOW_HOME: "{{ airflow_home }}"
+
+- name: Airflow | Start services
+  become: true
+  become_method: sudo
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - airflow-webserver
+    - airflow-scheduler

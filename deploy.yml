@@ -8,9 +8,12 @@
   hosts: cloud
   gather_facts: true
   roles:
-    - install
+    - users
+    - server
+    - monitoring
     - airflow
     - app
 
   vars_files:
     - ./vars/vars.yml
+    - ./secrets/vars.yml

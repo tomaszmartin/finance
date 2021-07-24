@@ -1,0 +1,21 @@
+---
+- name: Users | Add app users group
+  become: true
+  become_method: sudo
+  group:
+    name: "{{ app_group }}"
+    state: present
+
+- name: Users | Add app user
+  become: true
+  become_method: sudo
+  user:
+    name: "{{ app_user }}"
+    state: present
+
+- name: Users | Add ssh user to app group
+  become: true
+  user:
+    name: "{{ ansible_ssh_user }}"
+    groups: "{{ app_group }}"
+    append: yes

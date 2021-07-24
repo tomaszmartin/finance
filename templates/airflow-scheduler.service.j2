@@ -22,10 +22,10 @@ After=network.target postgresql.service mysql.service redis.service rabbitmq-ser
 Wants=postgresql.service mysql.service redis.service rabbitmq-server.service
 
 [Service]
-Environment=PYTHONPATH={{ app_home }}:$PYTHONPATH
-Environment=PATH={{ app_venv}}/bin:$PATH
+Environment=PYTHONPATH={{ env_var_python_path }}
+Environment=PATH={{ env_var_path }}
 Environment=AIRFLOW_HOME={{ airflow_home }}
-Environment=AIRFLOW_CONFIG={{ airflow_home }}/airflow.cfg
+Environment=AIRFLOW_CONFIG={{ airflow_config }}
 ExecStart={{ airflow_executable }} scheduler
 User={{ app_user }}
 Group={{ app_group }}

@@ -1,11 +1,11 @@
 ---
-- name: Install python dependencies
+- name: App | Install python dependencies
   become: true
   become_user: "{{ app_user }}"
   pip:
     name: "{{item}}"
-    virtualenv: "{{ app_venv }}"
-    virtualenv_command: "python{{ python_version }} -m venv"
+    virtualenv: "{{ venv_dir }}"
+    virtualenv_command: "{{ venv_cmd }}"
   with_lines: cat ./requirements.txt
 
 - name: App | Copy files

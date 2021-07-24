@@ -1,12 +1,12 @@
 ---
-- name: Check if ssl files exists
-  local_action: stat path="{{item}}"
+- name: Local | Check if ssl files exists
+  local_action: stat path="./secrets/{{item}}"
   with_items:
-    - ./ssl.crt
-    - ./ssl.key
+    - ssl.crt
+    - ssl.key
   register: ssl_files
 
-- name: Fail if any ssl file missing
+- name: Local | Fail if any ssl file missing
   fail:
     msg: "Missing {{ item.item }}"
   when: not item.stat.exists
