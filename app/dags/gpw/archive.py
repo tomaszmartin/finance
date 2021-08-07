@@ -56,10 +56,10 @@ DATASET_ID = "stocks"
 BUCKET_NAME = "sandbox_data_lake"
 
 archive_dag = DAG(
-    dag_id="stocks_archive_etl",
+    dag_id="stocks_archive",
     # Run on workdays at 17:15
     schedule_interval="15 17 * * 1-5",
-    start_date=dt.datetime.today(),
+    start_date=dt.datetime.today() - dt.timedelta(days=1),
 )
 
 for instrument in ["equities", "indices"]:

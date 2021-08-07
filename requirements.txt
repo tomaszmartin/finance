@@ -1,5 +1,7 @@
 Cython==0.29.23
+certifi==2021.5.30
 apache-airflow-providers-google==4.0.0
+apache-airflow-providers-http==2.0.0
 beautifulsoup4==4.9.3
 black==20.8b1
 google-cloud-firestore==2.1.3

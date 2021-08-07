@@ -10,7 +10,7 @@ from app.operators.scraping import FileToBucketOperator, BucketFileToFirestoreOp
 GCP_CONN_ID = "google_cloud"
 BUCKET_NAME = "sandbox_data_lake"
 realtime_dag = DAG(
-    dag_id="stocks_realtime_etl",
+    dag_id="stocks_realtime",
     # Run on workdays each hour from 9 to 17
     schedule_interval="0 9-17 * * 1-5",
     start_date=dt.datetime.today(),
