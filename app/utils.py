@@ -22,7 +22,9 @@ def to_snake(original: str) -> str:
     return res
 
 
-def to_float(value: str) -> Optional[float]:
+def to_float(
+    value: str, thusands_sep: str = ",", decimal_sep: str = "."
+) -> Optional[float]:
     """Casts string to float or returns None if not possible.
     It handles the ambiguity of ',' used as thousands separator.
 
@@ -34,7 +36,8 @@ def to_float(value: str) -> Optional[float]:
     """
     if value == "-":
         return None
-    value = value.replace(",", "")
+    value = value.replace(thusands_sep, "")
+    value = value.replace(decimal_sep, ".")
     return float(value)
 
 

@@ -9,7 +9,7 @@ from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCreateEmptyTableOperator,
 )
 
-from app.scrapers import stocks
+from app.scrapers.stocks import prices
 from app.operators.scraping import (
     FileToBucketOperator,
     BucketFileToBigQueryOperator,
@@ -33,7 +33,7 @@ for instrument in ["equities", "indices"]:
     download_task = FileToBucketOperator(
         task_id=f"download_{instrument}",
         dag=archive_dag,
-        file_provider=partial(stocks.get_archive, instrument),
+        file_provider=partial(prices.get_archive, instrument),
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
         object_name=object_name,
@@ -73,7 +73,7 @@ for instrument in ["equities", "indices"]:
     to_bigquery_task = BucketFileToBigQueryOperator(
         task_id=f"{instrument}_to_bigquery",
         dag=archive_dag,
-        parse_func=stocks.parse_archive,
+        parse_func=prices.parse_archive,
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
         object_name=object_name,

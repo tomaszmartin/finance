@@ -1,32 +1,9 @@
-import datetime as dt
-import hashlib
-
-from app.scrapers import stocks
-
-
-def test_getting_archives(archive_equities, archive_indices):
-    data, datetime = archive_equities
-    result = stocks.get_archive("equities", datetime)
-    assert result is not None
-    assert len(result) == 357489
-    assert len(result) == len(data)
-    data, datetime = archive_indices
-    result = stocks.get_archive("indices", datetime)
-    assert result is not None
-    assert len(result) == 91408
-    assert len(result) == len(data)
-
-
-def test_getting_current(realtime_equities):
-    result = stocks.get_current("equities", dt.datetime.now())
-    assert result is not None
-    result = stocks.get_current("indices", dt.datetime.now())
-    assert result is not None
+from app.scrapers.stocks import prices
 
 
 def test_parsing_archive_equities(archive_equities):
     data, execution_date = archive_equities
-    parsed = stocks.parse_archive(data, execution_date)
+    parsed = prices.parse_archive(data, execution_date)
     assert len(parsed) == 431
     assert parsed[0] == {
         "date": execution_date.date(),
@@ -45,7 +22,7 @@ def test_parsing_archive_equities(archive_equities):
 
 def test_parsing_archive_indices(archive_indices):
     data, execution_date = archive_indices
-    parsed = stocks.parse_archive(data, execution_date)
+    parsed = prices.parse_archive(data, execution_date)
     assert len(parsed) == 43
     assert parsed[0] == {
         "name": "CEEplus",
@@ -64,7 +41,7 @@ def test_parsing_archive_indices(archive_indices):
 
 def test_parsing_realtime_equities(realtime_equities):
     data, execution_date = realtime_equities
-    parsed = stocks.parse_realtime(data, execution_date)
+    parsed = prices.parse_realtime(data, execution_date)
     assert len(parsed) == 392
     assert parsed[0] == {
         "name": "06MAGNA",
@@ -85,7 +62,7 @@ def test_parsing_realtime_equities(realtime_equities):
 
 def test_parsing_realtime_indices(realtime_indices):
     data, execution_date = realtime_indices
-    parsed = stocks.parse_realtime(data, execution_date)
+    parsed = prices.parse_realtime(data, execution_date)
     assert len(parsed) == 43
     from pprint import pprint
 

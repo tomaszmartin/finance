@@ -4,7 +4,7 @@ from functools import partial
 
 from airflow import DAG
 
-from app.scrapers import stocks
+from app.scrapers.stocks import prices
 from app.operators.scraping import FileToBucketOperator, BucketFileToFirestoreOperator
 
 
@@ -22,7 +22,7 @@ for instrument in ["equities", "indices"]:
     download_task = FileToBucketOperator(
         task_id=f"download_{instrument}",
         dag=realtime_dag,
-        file_provider=partial(stocks.get_current, instrument),
+        file_provider=partial(prices.get_current, instrument),
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
         object_name=OBJ_NAME,
@@ -30,7 +30,7 @@ for instrument in ["equities", "indices"]:
     to_firestore_task = BucketFileToFirestoreOperator(
         task_id=f"{instrument}_to_firestore",
         dag=realtime_dag,
-        parse_func=stocks.parse_realtime,
+        parse_func=prices.parse_realtime,
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
         object_name=OBJ_NAME,

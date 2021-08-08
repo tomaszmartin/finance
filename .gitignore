@@ -6,6 +6,7 @@ secrets/
 hosts.ini
 *.crt
 *.key
+*.local
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
