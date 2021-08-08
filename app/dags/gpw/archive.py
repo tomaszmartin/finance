@@ -1,54 +1,19 @@
+"""Extracts historical data from GPW Polish Stock Exchange."""
 import datetime as dt
 from functools import partial
-from typing import Any, Dict
-import logging
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
-from airflow.contrib.hooks.bigquery_hook import BigQueryHook
-from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOperator
+from airflow.providers.google.cloud.operators.bigquery import (
+    BigQueryCheckOperator,
+    BigQueryCreateEmptyDatasetOperator,
+    BigQueryCreateEmptyTableOperator,
+)
 
 from app.scrapers import stocks
 from app.operators.scraping import (
     FileToBucketOperator,
     BucketFileToBigQueryOperator,
 )
-
-
-def create_table(
-    dataset_id: str,
-    table_id: str,
-    gcp_conn_id: str,
-    **context: Dict[str, Any],
-) -> None:
-    bq_hook = BigQueryHook(gcp_conn_id=gcp_conn_id)
-    bq_hook.create_empty_dataset(
-        dataset_id=dataset_id,
-        exists_ok=True,
-        location="EU",
-    )
-    bq_hook.create_empty_table(
-        dataset_id=dataset_id,
-        table_id=table_id,
-        schema_fields=[
-            {"name": "date", "type": "DATE", "mode": "REQUIRED"},
-            {"name": "name", "type": "STRING", "mode": "REQUIRED"},
-            {"name": "isin_code", "type": "STRING", "mode": "REQUIRED"},
-            {"name": "currency", "type": "STRING", "mode": "REQUIRED"},
-            {"name": "opening_price", "type": "FLOAT64", "mode": "REQUIRED"},
-            {"name": "closing_price", "type": "FLOAT64", "mode": "REQUIRED"},
-            {"name": "minimum_price", "type": "FLOAT64", "mode": "REQUIRED"},
-            {"name": "maximum_price", "type": "FLOAT64", "mode": "REQUIRED"},
-            {"name": "number_of_transactions", "type": "FLOAT64", "mode": "REQUIRED"},
-            {"name": "trade_volume", "type": "FLOAT64", "mode": "REQUIRED"},
-            {"name": "turnover_value", "type": "FLOAT64", "mode": "REQUIRED"},
-        ],
-        exists_ok=True,
-        time_partitioning={
-            "type": "MONTH",
-            "field": "date",
-        },
-    )
 
 
 GCP_CONN_ID = "google_cloud"
@@ -73,15 +38,37 @@ for instrument in ["equities", "indices"]:
         bucket_name=BUCKET_NAME,
         object_name=object_name,
     )
-    create_table_task = PythonOperator(
+    create_dataset = BigQueryCreateEmptyDatasetOperator(
+        task_id=f"create_{instrument}_dataset",
+        dag=archive_dag,
+        bigquery_conn_id=GCP_CONN_ID,
+        dataset_id=DATASET_ID,
+        location="EU",
+    )
+    create_table = BigQueryCreateEmptyTableOperator(
         task_id=f"create_{instrument}_table",
         dag=archive_dag,
-        python_callable=create_table,
-        op_kwargs={
-            "gcp_conn_id": GCP_CONN_ID,
-            "dataset_id": DATASET_ID,
-            "table_id": instrument,
+        bigquery_conn_id=GCP_CONN_ID,
+        dataset_id=DATASET_ID,
+        table_id=instrument,
+        schema_fields=[
+            {"name": "date", "type": "DATE", "mode": "REQUIRED"},
+            {"name": "name", "type": "STRING", "mode": "REQUIRED"},
+            {"name": "isin_code", "type": "STRING", "mode": "REQUIRED"},
+            {"name": "currency", "type": "STRING", "mode": "REQUIRED"},
+            {"name": "opening_price", "type": "FLOAT64", "mode": "REQUIRED"},
+            {"name": "closing_price", "type": "FLOAT64", "mode": "REQUIRED"},
+            {"name": "minimum_price", "type": "FLOAT64", "mode": "REQUIRED"},
+            {"name": "maximum_price", "type": "FLOAT64", "mode": "REQUIRED"},
+            {"name": "number_of_transactions", "type": "FLOAT64", "mode": "REQUIRED"},
+            {"name": "trade_volume", "type": "FLOAT64", "mode": "REQUIRED"},
+            {"name": "turnover_value", "type": "FLOAT64", "mode": "REQUIRED"},
+        ],
+        time_partitioning={
+            "type": "MONTH",
+            "field": "date",
         },
+        exists_ok=True,
     )
     to_bigquery_task = BucketFileToBigQueryOperator(
         task_id=f"{instrument}_to_bigquery",
@@ -102,5 +89,6 @@ for instrument in ["equities", "indices"]:
         use_legacy_sql=False,
     )
     download_task >> to_bigquery_task
-    create_table_task >> to_bigquery_task
+    create_dataset >> create_table
+    create_table >> to_bigquery_task
     to_bigquery_task >> verify_data

@@ -1,3 +1,4 @@
+"""Extracts current (realtime) data from GPW Polish Stock Exchange."""
 import datetime as dt
 from functools import partial
 
@@ -17,14 +18,14 @@ realtime_dag = DAG(
 )
 
 for instrument in ["equities", "indices"]:
-    object_name = "stocks/realtime/{instrument}{{ds}}.html"
+    OBJ_NAME = "stocks/realtime/{instrument}{{ds}}.html"
     download_task = FileToBucketOperator(
         task_id=f"download_{instrument}",
         dag=realtime_dag,
         file_provider=partial(stocks.get_current, instrument),
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
-        object_name=object_name,
+        object_name=OBJ_NAME,
     )
     to_firestore_task = BucketFileToFirestoreOperator(
         task_id=f"{instrument}_to_firestore",
@@ -32,7 +33,7 @@ for instrument in ["equities", "indices"]:
         parse_func=stocks.parse_realtime,
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
-        object_name=object_name,
+        object_name=OBJ_NAME,
         collection_id=instrument,
         key_column="isin_code",
     )

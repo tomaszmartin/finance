@@ -1,5 +1,5 @@
+"""Helper functions for scraping and parsing data for GPW Polish Stock Exchange."""
 import datetime as dt
-import logging
 from typing import Any, Dict, List
 import urllib.parse as urlparse
 from urllib.parse import parse_qs
@@ -11,29 +11,59 @@ from app import utils
 
 
 def get_archive(instrument: str, execution_date: dt.date) -> bytes:
+    """Extracts archive data by extracting html of the page.
+
+    Args:
+        instrument: equities od indices
+        execution_date (dt.date): what day
+
+    Returns:
+        website contents
+    """
     type_map = {"equities": "10", "indices": "1"}
     params = {
         "type": type_map[instrument],
         "instrument": "",
         "date": execution_date.strftime("%d-%m-%Y"),
     }
-    url = f"https://www.gpw.pl/price-archive-full"
+    url = "https://www.gpw.pl/price-archive-full"
     resp = requests.get(url, params=params)
     resp.raise_for_status()
     return resp.content
 
 
 def get_current(instrument: str, execution_date: dt.date) -> bytes:
+    """Extracts current data by extracting html of the page.
+
+    Args:
+        instrument: equities od indices
+        execution_date (dt.date): what day (unused here, but needed for compatibility)
+
+    Returns:
+        website contents
+    """
     type_map = {
         "equities": "https://www.gpw.pl/shares-and-rights-to-shares",
-        "indices": "https://gpwbenchmark.pl/ajaxindex.php?action=GPWIndexes&start=showTable&tab=all&lang=EN&format=html",
+        "indices": (
+            "https://gpwbenchmark.pl/ajaxindex.php?action=GPWIndexes"
+            "&start=showTable&tab=all&lang=EN&format=html"
+        ),
     }
     resp = requests.get(type_map[instrument])
     resp.raise_for_status()
     return resp.content
 
 
-def parse_archive(stocks_data: bytes, datetime: dt.datetime):
+def parse_archive(stocks_data: bytes, datetime: dt.datetime) -> list[dict[str, Any]]:
+    """Parses archive html data.
+
+    Args:
+        stocks_data: website html
+        datetime: what day
+
+    Returns:
+        parsed data
+    """
     soup = BeautifulSoup(stocks_data, "lxml")
     column_names = get_column_names(soup)
     main = soup.select(".table.footable")[0]
@@ -47,10 +77,19 @@ def parse_archive(stocks_data: bytes, datetime: dt.datetime):
 
 
 def parse_realtime(stocks_data: bytes, datetime: dt.datetime):
+    """Parses current html data.
+
+    Args:
+        stocks_data: website html
+        datetime: what day
+
+    Returns:
+        parsed data
+    """
     soup = BeautifulSoup(stocks_data, "lxml")
-    main = soup.select(".table")[-1]  # HERE
+    main = soup.select(".table")[-1]
     column_names = get_column_names(main)[:12]
-    rows = main.select("tr:not(.footable-group-row):not(.summary)")[1:]  # HERE
+    rows = main.select("tr:not(.footable-group-row):not(.summary)")[1:]
     records: List[Dict[str, Any]] = []
     records = [parse_realtime_row(row, column_names) for row in rows]
     records = [rec for rec in records if rec]
@@ -59,13 +98,30 @@ def parse_realtime(stocks_data: bytes, datetime: dt.datetime):
     return records
 
 
-def get_column_names(soup: BeautifulSoup) -> List[str]:
+def get_column_names(soup: BeautifulSoup) -> list[str]:
+    """Extracts column names from the soup.
+
+    Args:
+        soup: website content
+
+    Returns:
+        list of columns
+    """
     header = soup.find("thead")
     columns_names = [utils.to_snake(tag.text) for tag in header.find_all("th")]
     return columns_names
 
 
 def parse_realtime_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
+    """Parses row of relitime data.
+
+    Args:
+        row: row data
+        column_names: list of column names to be extracted
+
+    Returns:
+        dict with row data
+    """
     link = row.find_all("a")[1]
     url_address = "https://www.gpw.pl/" + link["href"]
     parsed = urlparse.urlparse(url_address)
@@ -77,6 +133,15 @@ def parse_realtime_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str,
 
 
 def parse_row(row: BeautifulSoup, column_names: List[str]) -> Dict[str, str]:
+    """Parses row of data.
+
+    Args:
+        row: row data
+        column_names: list of column names to be extracted
+
+    Returns:
+        dict with row data
+    """
     metrics = [
         "closing_price",
         "opening_price",

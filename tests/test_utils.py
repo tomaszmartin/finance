@@ -1,4 +1,3 @@
-import datetime as dt
 from app import utils
 
 
@@ -22,3 +21,8 @@ def test_dict_rename():
 def test_key_drop():
     the_dict = {"cola": "val", "colb": "val"}
     assert utils.drop(the_dict, ["cola"]) == {"colb": "val"}
+
+
+def test_key_drop_missing_cols():
+    the_dict = {"cola": "val", "colb": "val"}
+    assert utils.drop(the_dict, ["colc"]) == the_dict
