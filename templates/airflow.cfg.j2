@@ -9,3 +9,4 @@ fernet_key={{ airflow_fernet_key }}
 [webserver]
 web_server_ssl_cert={{ app_home }}/ssl.crt
 web_server_ssl_key={{ app_home }}/ssl.key
+worker_class=gevent

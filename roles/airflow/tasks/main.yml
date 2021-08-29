@@ -47,7 +47,7 @@
     dest: "{{ airflow_home }}/airflow.cfg"
     owner: "{{ app_user }}"
     group: "{{ app_group }}"
-    mode: 0660
+    mode: 0644
 
 - name: Airflow | Copy airflow run config
   become: true
@@ -91,6 +91,14 @@
   environment:
     AIRFLOW_HOME: "{{ airflow_home }}"
 
+- name: Airflow | Change Airflow DB permissions
+  become: true
+  become_method: sudo
+  ansible.builtin.file:
+    path: "{{ airflow_db_path }}"
+    mode: 0664
+  when: airflow_db_path is defined
+
 - name: Airflow | Create Admin users
   become: true
   become_user: "{{ app_user }}"
@@ -115,12 +123,12 @@
   environment:
     AIRFLOW_HOME: "{{ airflow_home }}"
 
-- name: Airflow | Start services
+- name: Airflow | Restart services
   become: true
   become_method: sudo
   systemd:
     name: "{{ item }}"
-    state: started
+    state: restarted
     enabled: yes
   with_items:
     - airflow-webserver
