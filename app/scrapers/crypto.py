@@ -3,6 +3,33 @@ import pandas as pd
 
 from airflow.providers.http.hooks.http import HttpHook
 
+COINS = [
+    "ADA",
+    "BCH",
+    "BTC",
+    "BTT",
+    "BNB",
+    "BUSD",
+    "DASH",
+    "DOGE",
+    "DOT",
+    "EOS",
+    "ETH",
+    "ETC",
+    "FLOW",
+    "GRT",
+    "ICP",
+    "LTC",
+    "LUNA",
+    "SAND",
+    "SOL",
+    "TRX",
+    "USDC",
+    "USDT",
+    "XRP",
+    "XLM",
+]
+
 
 def download_data(coin_symbol: str, execution_date: dt.datetime) -> bytes:
     """Downloads file with appropriate data from the CoinAPI.
@@ -25,7 +52,7 @@ def download_data(coin_symbol: str, execution_date: dt.datetime) -> bytes:
     return data
 
 
-def parse_data(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
+def parse_data(data: bytes, execution_date: dt.datetime, coin: str = ""):
     """Extracts data from file into correct format.
 
     Args:
@@ -34,12 +61,12 @@ def parse_data(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
         coin_symbol: what coin this data holds. It's not present in the file data.
 
     Raises:
-        ValueError: when no coin_symbol is passed
+        ValueError: when no coin is passed
 
     Returns:
         final data
     """
-    if not coin_symbol:
+    if not coin:
         raise ValueError("Need to specify coin!")
     frame = pd.read_json(data)
     frame = frame.rename(
@@ -55,6 +82,6 @@ def parse_data(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
         columns=["time_period_start", "time_period_end", "time_open", "time_close"]
     )
     frame["date"] = execution_date.date()
-    frame["coin"] = coin_symbol.upper()
+    frame["coin"] = coin.upper()
     frame["base"] = "USD"
     return frame.to_dict("records")

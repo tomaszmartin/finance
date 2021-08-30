@@ -11,8 +11,8 @@ from airflow.providers.google.cloud.operators.bigquery import (
 
 from app.scrapers.stocks import prices
 from app.operators.scraping import (
-    FileToBucketOperator,
-    BucketFileToBigQueryOperator,
+    FilesToBucketOperator,
+    BucketFilesToBigQueryOperator,
 )
 
 
@@ -30,13 +30,12 @@ archive_dag = DAG(
 for instrument in ["equities", "indices"]:
     object_name = f"stocks/archive/{instrument}/"
     object_name += "{{execution_date.year}}/{{ds}}.html"
-    download_task = FileToBucketOperator(
+    download_task = FilesToBucketOperator(
         task_id=f"download_{instrument}",
         dag=archive_dag,
-        file_provider=partial(prices.get_archive, instrument),
+        file_providers={object_name: partial(prices.get_archive, instrument)},
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
-        object_name=object_name,
     )
     create_dataset = BigQueryCreateEmptyDatasetOperator(
         task_id=f"create_{instrument}_dataset",
@@ -70,13 +69,12 @@ for instrument in ["equities", "indices"]:
         },
         exists_ok=True,
     )
-    to_bigquery_task = BucketFileToBigQueryOperator(
+    to_bigquery_task = BucketFilesToBigQueryOperator(
         task_id=f"{instrument}_to_bigquery",
         dag=archive_dag,
-        parse_func=prices.parse_archive,
+        file_parsers={object_name: prices.parse_archive},
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
-        object_name=object_name,
         dataset_id=DATASET_ID,
         table_id=instrument,
     )

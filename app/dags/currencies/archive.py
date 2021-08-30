@@ -8,7 +8,7 @@ from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCreateEmptyTableOperator,
 )
 
-from app.operators.scraping import FileToBucketOperator, BucketFileToBigQueryOperator
+from app.operators.scraping import FilesToBucketOperator, BucketFilesToBigQueryOperator
 from app.scrapers import currencies
 
 
@@ -23,13 +23,12 @@ currencies_dag = DAG(
     schedule_interval="@daily",
     start_date=dt.datetime.today() - dt.timedelta(days=1),
 )
-download_task = FileToBucketOperator(
+download_task = FilesToBucketOperator(
     task_id="download_rates",
     dag=currencies_dag,
-    file_provider=currencies.download_data,
+    file_providers={OBJ_NAME: currencies.download_data},
     gcp_conn_id=GCP_CONN_ID,
     bucket_name=BUCKET_NAME,
-    object_name=OBJ_NAME,
 )
 create_dataset = BigQueryCreateEmptyDatasetOperator(
     task_id="create_dataset",
@@ -56,13 +55,12 @@ create_table = BigQueryCreateEmptyTableOperator(
     },
     exists_ok=True,
 )
-to_bigquery_task = BucketFileToBigQueryOperator(
+to_bigquery_task = BucketFilesToBigQueryOperator(
     task_id="rates_to_bigquery",
     dag=currencies_dag,
-    parse_func=currencies.parse_data,
+    file_parsers={OBJ_NAME: currencies.parse_data},
     gcp_conn_id=GCP_CONN_ID,
     bucket_name=BUCKET_NAME,
-    object_name=OBJ_NAME,
     dataset_id=DATASET_ID,
     table_id=TABLE_ID,
 )

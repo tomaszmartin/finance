@@ -10,63 +10,68 @@ from google.oauth2 import service_account
 from google.cloud import firestore
 
 
-class FileToBucketOperator(BaseOperator):
-    template_fields = ["bucket_name", "object_name"]
+class FilesToBucketOperator(BaseOperator):
+    template_fields = ["file_providers"]
 
     def __init__(
         self,
-        file_provider: Callable,
+        file_providers: dict[str, Callable],
         gcp_conn_id: str,
         bucket_name: str,
-        object_name: str,
         **kwargs,
     ) -> None:
+        """Allows to download a set of files and save them in Google Cloud Storage.
+
+        Args:
+            file_providers: dict of destination object name, and a callable
+                containing function that takes execution_date and returns the file as BytesIO
+            gcp_conn_id: GCP connection for destination bucket
+            bucket_name: destination bucket name
+        """
         super().__init__(**kwargs)
-        self.file_provider = file_provider
+        self.file_providers = file_providers
         self.gcp_conn_id = gcp_conn_id
         self.bucket_name = bucket_name
-        self.object_name = object_name
 
     def execute(self, context):
-        logging.info("Downloading data for %s", context["execution_date"])
-        stocks_data = self.file_provider(context["execution_date"])
-        storage_hook = GCSHook(google_cloud_storage_conn_id=self.gcp_conn_id)
-        storage_hook.upload(
-            self.bucket_name, object_name=self.object_name, data=stocks_data
-        )
+        for object_name, file_provider in self.file_providers.items():
+            data = file_provider(context["execution_date"])
+            storage_hook = GCSHook(google_cloud_storage_conn_id=self.gcp_conn_id)
+            storage_hook.upload(self.bucket_name, object_name=object_name, data=data)
 
 
-class BucketFileToDatabase(BaseOperator):
-    template_fields = ["bucket_name", "object_name"]
+class BucketFilesToDatabase(BaseOperator):
+    template_fields = ["file_parsers"]
 
     def __init__(
         self,
-        parse_func: Callable,
+        file_parsers: dict[str, Callable],
         gcp_conn_id: str,
         bucket_name: str,
-        object_name: str,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        self.parse_func = parse_func
+        self.file_parsers = file_parsers
         self.gcp_conn_id = gcp_conn_id
         self.bucket_name = bucket_name
-        self.object_name = object_name
 
     def execute(self, context):
         logging.info("Parse and upload to BigQuery for %s", context["execution_date"])
-        storage_hook = GCSHook(google_cloud_storage_conn_id=self.gcp_conn_id)
-        data = storage_hook.download(
-            object_name=self.object_name, bucket_name=self.bucket_name
-        )
-        parsed_data = self.parse_func(data, context["execution_date"])
+        parsed_data = []
+        for object_name, parse_func in self.file_parsers.items():
+            storage_hook = GCSHook(google_cloud_storage_conn_id=self.gcp_conn_id)
+            raw_data = storage_hook.download(
+                object_name=object_name, bucket_name=self.bucket_name
+            )
+            current_parsed = parse_func(raw_data, context["execution_date"])
+            parsed_data.extend(current_parsed)
         self.store(parsed_data, context)
 
     def store(self, data: List[Dict[str, Any]], context: Dict[str, Any]) -> None:
         raise NotImplementedError()
 
 
-class BucketFileToBigQueryOperator(BucketFileToDatabase):
+class BucketFilesToBigQueryOperator(BucketFilesToDatabase):
     def __init__(
         self,
         dataset_id: str,
@@ -84,7 +89,7 @@ class BucketFileToBigQueryOperator(BucketFileToDatabase):
         )
 
 
-class BucketFileToFirestoreOperator(BucketFileToDatabase):
+class BucketFilesToFirestoreOperator(BucketFilesToDatabase):
     def __init__(
         self,
         collection_id: str,
