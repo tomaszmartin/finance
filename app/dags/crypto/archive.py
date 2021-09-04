@@ -17,11 +17,13 @@ GCP_CONN_ID = "google_cloud"
 BUCKET_NAME = "sandbox_data_lake"
 DATASET_ID = "crypto"
 FILE_PROVIDERS = {
-    f"crypto/archive/{coin}" + "{{ds}}.json": partial(crypto.download_data, coin)
+    f"crypto/archive/{{execution_date.year}}/{coin}/"
+    + "{{ds}}.json": partial(crypto.download_data, coin)
     for coin in crypto.COINS
 }
 FILE_PARSERS = {
-    f"crypto/archive/{coin}" + "{{ds}}.json": partial(crypto.parse_data, coin=coin)
+    f"crypto/archive/{{execution_date.year}}/{coin}/"
+    + "{{ds}}.json": partial(crypto.parse_data, coin=coin)
     for coin in crypto.COINS
 }
 TABLE = "crypto"

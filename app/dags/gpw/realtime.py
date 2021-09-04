@@ -18,7 +18,7 @@ realtime_dag = DAG(
 )
 
 for instrument in ["equities", "indices"]:
-    OBJ_NAME = "stocks/realtime/{instrument}{{ds}}.html"
+    OBJ_NAME = f"stocks/realtime/{instrument}" + "{{ds}}.html"
     download_task = FilesToBucketOperator(
         task_id=f"download_{instrument}",
         dag=realtime_dag,

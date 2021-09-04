@@ -16,7 +16,7 @@ GCP_CONN_ID = "google_cloud"
 BUCKET_NAME = "sandbox_data_lake"
 DATASET_ID = "currencies"
 
-OBJ_NAME = "currencies/archive/{{ds}}.json"
+OBJ_NAME = "currencies/archive/{{execution_date.year}}/{{ds}}.json"
 TABLE_ID = "rates"
 currencies_dag = DAG(
     dag_id="currencies_archive",
