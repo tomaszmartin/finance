@@ -2,3 +2,4 @@ source .env/bin/activate
 export AIRFLOW__CORE__DAGS_FOLDER="$(pwd)/app/dags/"
 export AIRFLOW__CORE__LOAD_EXAMPLES=False
 export PYTHONPATH="$(pwd)/app/":$PYTHONPATH
+export AIRFLOW__CORE__HOSTNAME_CALLABLE=socket:gethostname
