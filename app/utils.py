@@ -34,7 +34,7 @@ def to_float(
     Returns:
         float or null
     """
-    if value == "-":
+    if value in ["-", "", "---", "x"]:
         return None
     value = value.replace(thusands_sep, "")
     value = value.replace(decimal_sep, ".")
