@@ -4,17 +4,20 @@ import json
 import requests
 
 
-def download_data(execution_date: dt.datetime) -> bytes:
+def download_data(execution_date: dt.datetime, realtime: bool = False) -> bytes:
     """Downloads file with appropriate data from the exchangerate api.
 
     Args:
         execution_date: for what day
+        current: if should download realtime data
 
     Returns:
         bytes: result
     """
-    endpoint = "https://api.exchangerate.host/{day}?base=PLN"
-    endpoint = endpoint.format(day=execution_date.date())
+    day = execution_date.date()
+    if realtime:
+        day = dt.date.today()
+    endpoint = f"https://api.exchangerate.host/{day}?base=PLN"
     resp = requests.get(endpoint)
     resp.raise_for_status()
     data = resp.content

@@ -25,10 +25,26 @@ COINS = [
     "SOL",
     "TRX",
     "USDC",
-    "USDT",
     "XRP",
     "XLM",
 ]
+
+
+def download_realtime(coin_symbol: str, execution_date: dt.datetime) -> bytes:
+    """Downloads current prices for a specified coin.
+
+    Args:
+        coin_symbol: what coin should be downloaded, for example BTC
+        execution_date: unused in this context
+
+    Returns:
+        bytes: result
+    """
+    hook = HttpHook("GET", http_conn_id="coinapi")
+    endpoint = f"v1/quotes/BINANCE_SPOT_{coin_symbol.upper()}_USDT/current"
+    resp = hook.run(endpoint)
+    data = resp.content
+    return data
 
 
 def download_data(coin_symbol: str, execution_date: dt.datetime) -> bytes:
@@ -84,4 +100,29 @@ def parse_data(data: bytes, execution_date: dt.datetime, coin: str = ""):
     frame["date"] = execution_date.date()
     frame["coin"] = coin.upper()
     frame["base"] = "USD"
+    return frame.to_dict("records")
+
+
+def parse_realtime(data: bytes, execution_date: dt.datetime, coin: str = ""):
+    """Extracts realtime data from file into correct format.
+
+    Args:
+        data: data from file
+        execution_date: not used in this context
+        coin_symbol: what coin this data holds. It's not present in the file data.
+
+    Raises:
+        ValueError: when no coin is passed
+
+    Returns:
+        final data
+    """
+    if not coin:
+        raise ValueError("Need to specify coin!")
+    frame = pd.read_json(data)
+    frame["coin"] = coin.upper()
+    frame["base"] = "USD"
+    frame = frame.drop(
+        columns=["symbol_id", "last_trade", "time_exchange", "time_coinapi"]
+    )
     return frame.to_dict("records")

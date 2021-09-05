@@ -1,6 +1,5 @@
 """Extract historical data for chosen cryptocurrencies."""
 import datetime as dt
-from functools import partial
 
 from airflow import DAG
 from airflow.providers.google.cloud.operators.bigquery import (
@@ -10,22 +9,12 @@ from airflow.providers.google.cloud.operators.bigquery import (
 )
 
 from app.operators.scraping import FilesToBucketOperator, BucketFilesToBigQueryOperator
-from app.scrapers import crypto
+from app.dags import crypto
 
 
 GCP_CONN_ID = "google_cloud"
 BUCKET_NAME = "sandbox_data_lake"
 DATASET_ID = "crypto"
-FILE_PROVIDERS = {
-    f"crypto/archive/{{execution_date.year}}/{coin}/"
-    + "{{ds}}.json": partial(crypto.download_data, coin)
-    for coin in crypto.COINS
-}
-FILE_PARSERS = {
-    f"crypto/archive/{{execution_date.year}}/{coin}/"
-    + "{{ds}}.json": partial(crypto.parse_data, coin=coin)
-    for coin in crypto.COINS
-}
 TABLE = "crypto"
 
 crypto_dag = DAG(
@@ -37,7 +26,7 @@ crypto_dag = DAG(
 download_task = FilesToBucketOperator(
     task_id="download_coins",
     dag=crypto_dag,
-    file_providers=FILE_PROVIDERS,
+    file_providers=crypto.ARCHIVE_PROVIDERS,
     gcp_conn_id=GCP_CONN_ID,
     bucket_name=BUCKET_NAME,
 )
@@ -72,7 +61,7 @@ create_table = BigQueryCreateEmptyTableOperator(
 to_bigquery_task = BucketFilesToBigQueryOperator(
     task_id="coins_to_bigquery",
     dag=crypto_dag,
-    file_parsers=FILE_PARSERS,
+    file_parsers=crypto.ARCHIVE_PARSERS,
     gcp_conn_id=GCP_CONN_ID,
     bucket_name=BUCKET_NAME,
     dataset_id=DATASET_ID,

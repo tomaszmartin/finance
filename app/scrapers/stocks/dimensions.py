@@ -21,7 +21,10 @@ def get_data(execution_date: dt.datetime, isin_code: str, fact_type: str) -> byt
     allowed_facts = ["info", "indicators"]
     if fact_type not in allowed_facts:
         raise ValueError(f"Unknown fact type {fact_type}!")
-    endpoint = f"https://www.gpw.pl/ajaxindex.php?start={fact_type}Tab&format=html&action=GPWListaSp&gls_isin={isin_code}&lang=EN"
+    endpoint = (
+        f"https://www.gpw.pl/ajaxindex.php?start={fact_type}Tab"
+        f"&format=html&action=GPWListaSp&gls_isin={isin_code}&lang=EN"
+    )
     response = requests.get(endpoint)
     response.raise_for_status()
     return response.content

@@ -15,7 +15,7 @@ from app.operators.scraping import (
     FilesToBucketOperator,
     BucketFilesToBigQueryOperator,
 )
-from app.scrapers.stocks import dimenions
+from app.scrapers.stocks import dimensions
 
 
 GCP_CONN_ID = "google_cloud"
@@ -80,11 +80,11 @@ def get_generator(
     for isin_code, file_path in file_names:
         if task == "download":
             yield file_path, partial(
-                dimenions.get_data, isin_code=isin_code, fact_type=fact_type
+                dimensions.get_data, isin_code=isin_code, fact_type=fact_type
             )
         elif task == "upload":
             yield file_path, partial(
-                dimenions.parse_data, isin_code=isin_code, fact_type=fact_type
+                dimensions.parse_data, isin_code=isin_code, fact_type=fact_type
             )
 
 
