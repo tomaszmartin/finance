@@ -1,3 +1,4 @@
+"""Enables to extract datya from Exchangarte API."""
 import datetime as dt
 import json
 

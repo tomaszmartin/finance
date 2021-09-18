@@ -1,6 +1,5 @@
 """Helper functions for scraping and parsing data for GPW Polish Stock Exchange."""
 import datetime as dt
-import logging
 from typing import Any
 
 from bs4 import BeautifulSoup
@@ -33,6 +32,7 @@ def get_data(execution_date: dt.datetime, isin_code: str, fact_type: str) -> byt
 def parse_data(
     data: bytes, execution_date: dt.datetime, isin_code: str, fact_type: str
 ) -> list[dict[str, Any]]:
+    """Parses data in html into a list of dicts."""
     soup = BeautifulSoup(data, "lxml")
     result: dict[str, Any] = {}
     main = soup.select(".footable")[0]
@@ -43,15 +43,15 @@ def parse_data(
         key = utils.to_snake(key)
         result[key] = value
     if fact_type == "indicators":
-        result = clean_indicators_data(result)
+        result = _clean_indicators_data(result)
     if fact_type == "info":
-        result = clean_info_data(result)
+        result = _clean_info_data(result)
     result["isin_code"] = isin_code
     result["date"] = execution_date.date()
     return [result]
 
 
-def clean_info_data(data: dict[str, Any]) -> dict[str, Any]:
+def _clean_info_data(data: dict[str, Any]) -> dict[str, Any]:
     data["number_of_shares_issued"] = utils.to_float(
         data["number_of_shares_issued"], thusands_sep=" ", decimal_sep=","
     )
@@ -74,7 +74,7 @@ def clean_info_data(data: dict[str, Any]) -> dict[str, Any]:
     return data
 
 
-def clean_indicators_data(data: dict[str, Any]) -> dict[str, Any]:
+def _clean_indicators_data(data: dict[str, Any]) -> dict[str, Any]:
     data.pop("isin")
     for col in ["book_value", "market_value"]:
         data[f"{col}_(mln_pln)"] = utils.to_float(data[f"{col}_(mln_pln)"])

@@ -1,3 +1,4 @@
+"""Extracts data from a coinbase API."""
 import datetime as dt
 import pandas as pd
 
@@ -30,7 +31,7 @@ COINS = [
 ]
 
 
-def download_realtime(coin_symbol: str, execution_date: dt.datetime) -> bytes:
+def download_realtime(execution_date: dt.datetime, coin_symbol: str) -> bytes:
     """Downloads current prices for a specified coin.
 
     Args:
@@ -47,7 +48,7 @@ def download_realtime(coin_symbol: str, execution_date: dt.datetime) -> bytes:
     return data
 
 
-def download_data(coin_symbol: str, execution_date: dt.datetime) -> bytes:
+def download_data(execution_date: dt.datetime, coin_symbol: str) -> bytes:
     """Downloads file with appropriate data from the CoinAPI.
 
     Args:
@@ -68,7 +69,7 @@ def download_data(coin_symbol: str, execution_date: dt.datetime) -> bytes:
     return data
 
 
-def parse_data(data: bytes, execution_date: dt.datetime, coin: str = ""):
+def parse_data(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
     """Extracts data from file into correct format.
 
     Args:
@@ -82,7 +83,7 @@ def parse_data(data: bytes, execution_date: dt.datetime, coin: str = ""):
     Returns:
         final data
     """
-    if not coin:
+    if not coin_symbol:
         raise ValueError("Need to specify coin!")
     frame = pd.read_json(data)
     frame = frame.rename(
@@ -98,12 +99,12 @@ def parse_data(data: bytes, execution_date: dt.datetime, coin: str = ""):
         columns=["time_period_start", "time_period_end", "time_open", "time_close"]
     )
     frame["date"] = execution_date.date()
-    frame["coin"] = coin.upper()
+    frame["coin"] = coin_symbol.upper()
     frame["base"] = "USD"
     return frame.to_dict("records")
 
 
-def parse_realtime(data: bytes, execution_date: dt.datetime, coin: str = ""):
+def parse_realtime(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
     """Extracts realtime data from file into correct format.
 
     Args:
@@ -117,10 +118,10 @@ def parse_realtime(data: bytes, execution_date: dt.datetime, coin: str = ""):
     Returns:
         final data
     """
-    if not coin:
+    if not coin_symbol:
         raise ValueError("Need to specify coin!")
     frame = pd.read_json(data)
-    frame["coin"] = coin.upper()
+    frame["coin"] = coin_symbol.upper()
     frame["base"] = "USD"
     frame = frame.drop(
         columns=["symbol_id", "last_trade", "time_exchange", "time_coinapi"]

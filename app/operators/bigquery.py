@@ -1,3 +1,4 @@
+"""Contains Operators for working with Google BigQuery."""
 from typing import Any
 import logging
 
@@ -6,6 +7,10 @@ from airflow.contrib.hooks.bigquery_hook import BigQueryHook
 
 
 class SelectFromBigQuery(BaseOperator):
+    """Operator that enables to select data from BigQuery and
+    returns it as a list of dicts.
+    """
+
     template_fields = ["sql"]
 
     def __init__(self, gcp_conn_id: str, sql: str, **kwargs: Any) -> None:
@@ -20,5 +25,4 @@ class SelectFromBigQuery(BaseOperator):
             sql=self.sql,
         )
         data = results.to_dict("records")
-        logging.info(data)
         return data
