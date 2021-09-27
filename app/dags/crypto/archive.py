@@ -2,7 +2,9 @@
 import datetime as dt
 
 from airflow import DAG
-from airflow.contrib.operators.gcs_to_bq import GCSToBigQueryOperator
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
+    GCSToBigQueryOperator,
+)
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryCreateEmptyDatasetOperator,
@@ -41,7 +43,7 @@ crypto_dag = DAG(
 create_dataset = BigQueryCreateEmptyDatasetOperator(
     task_id="create_dataset",
     dag=crypto_dag,
-    bigquery_conn_id=GCP_CONN_ID,
+    gcp_conn_id=GCP_CONN_ID,
     dataset_id=DATASET_ID,
     location="EU",
 )

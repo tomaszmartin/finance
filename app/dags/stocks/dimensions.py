@@ -70,7 +70,7 @@ for fact_type in ["info", "indicators"]:
     create_dataset = BigQueryCreateEmptyDatasetOperator(
         task_id=f"create_{fact_type}_dataset",
         dag=dimensions_dag,
-        bigquery_conn_id=GCP_CONN_ID,
+        gcp_conn_id=GCP_CONN_ID,
         dataset_id=DATASET_ID,
         location="EU",
     )

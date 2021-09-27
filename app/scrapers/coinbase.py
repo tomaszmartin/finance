@@ -31,12 +31,12 @@ COINS = [
 ]
 
 
-def download_realtime(execution_date: dt.datetime, coin_symbol: str) -> bytes:
+def download_realtime(for_date: dt.datetime, coin_symbol: str) -> bytes:
     """Downloads current prices for a specified coin.
 
     Args:
         coin_symbol: what coin should be downloaded, for example BTC
-        execution_date: unused in this context
+        for_date: unused in this context
 
     Returns:
         bytes: result
@@ -48,33 +48,33 @@ def download_realtime(execution_date: dt.datetime, coin_symbol: str) -> bytes:
     return data
 
 
-def download_data(execution_date: dt.datetime, coin_symbol: str) -> bytes:
+def download_data(for_date: dt.datetime, coin_symbol: str) -> bytes:
     """Downloads file with appropriate data from the CoinAPI.
 
     Args:
         coin_symbol: what coin should be downloaded, for example BTC
-        execution_date: for what day
+        for_date: for what day
 
     Returns:
         bytes: result
     """
-    next_day = execution_date + dt.timedelta(days=1)
+    next_day = for_date + dt.timedelta(days=1)
     hook = HttpHook("GET", http_conn_id="coinapi")
     endpoint = "v1/exchangerate/{coin}/USD/history?period_id=1DAY&time_start={start}&time_end={end}"
     endpoint = endpoint.format(
-        coin=coin_symbol.upper(), start=execution_date.date(), end=next_day.date()
+        coin=coin_symbol.upper(), start=for_date.date(), end=next_day.date()
     )
     resp = hook.run(endpoint)
     data = resp.content
     return data
 
 
-def parse_data(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
+def parse_data(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
     """Extracts data from file into correct format.
 
     Args:
         data: data from file
-        execution_date: for what day data was downloaded
+        for_date: for what day data was downloaded
         coin_symbol: what coin this data holds. It's not present in the file data.
 
     Raises:
@@ -98,18 +98,18 @@ def parse_data(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
     frame = frame.drop(
         columns=["time_period_start", "time_period_end", "time_open", "time_close"]
     )
-    frame["date"] = execution_date.date()
+    frame["date"] = for_date.date()
     frame["coin"] = coin_symbol.upper()
     frame["base"] = "USD"
     return frame.to_dict("records")
 
 
-def parse_realtime(data: bytes, execution_date: dt.datetime, coin_symbol: str = ""):
+def parse_realtime(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
     """Extracts realtime data from file into correct format.
 
     Args:
         data: data from file
-        execution_date: not used in this context
+        for_date: not used in this context
         coin_symbol: what coin this data holds. It's not present in the file data.
 
     Raises:

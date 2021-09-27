@@ -1,5 +1,6 @@
 """Helper functions for scraping and parsing data for GPW Polish Stock Exchange."""
 import datetime as dt
+import logging
 from typing import Any, Dict, List
 import urllib.parse as urlparse
 from urllib.parse import parse_qs
@@ -32,7 +33,7 @@ def get_archive(instrument: str, execution_date: dt.date) -> bytes:
     return resp.content
 
 
-def get_current(instrument: str, execution_date: dt.date) -> bytes:
+def get_realtime(instrument: str, execution_date: dt.date) -> bytes:
     """Extracts current data by extracting html of the page.
 
     Args:
@@ -43,7 +44,10 @@ def get_current(instrument: str, execution_date: dt.date) -> bytes:
         website contents
     """
     type_map = {
-        "equities": "https://www.gpw.pl/shares-and-rights-to-shares",
+        "equities": (
+            "https://www.gpw.pl/ajaxindex.php?action=GPWQuotations"
+            "&start=showTable&tab=search&lang=EN&full=1&format=html"
+        ),
         "indices": (
             "https://gpwbenchmark.pl/ajaxindex.php?action=GPWIndexes"
             "&start=showTable&tab=all&lang=EN&format=html"
@@ -88,6 +92,7 @@ def parse_realtime(stocks_data: bytes, datetime: dt.datetime):
     """
     soup = BeautifulSoup(stocks_data, "lxml")
     main = soup.select(".table")[-1]
+    logging.info(f"MAIN {main}")
     column_names = get_column_names(main)[:12]
     rows = main.select("tr:not(.footable-group-row):not(.summary)")[1:]
     records: List[Dict[str, Any]] = []
@@ -108,6 +113,7 @@ def get_column_names(soup: BeautifulSoup) -> list[str]:
         list of columns
     """
     header = soup.find("thead")
+    logging.info(f"HEADER {header}")
     columns_names = [utils.to_snake(tag.text) for tag in header.find_all("th")]
     return columns_names
 

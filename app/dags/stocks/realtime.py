@@ -19,17 +19,17 @@ BUCKET_NAME = "stocks_dl"
 realtime_dag = DAG(
     dag_id="stocks_realtime",
     schedule_interval="0 9-17 * * 1-5",
-    start_date=dt.datetime.today(),
+    start_date=dt.datetime.today() - dt.timedelta(days=1),
 )
 
 for instrument in ["equities", "indices"]:
-    PARAMS = {"process": "gpw", "dataset": "realtime_{instrument}"}
+    PARAMS = {"process": "gpw", "dataset": "realtime", "prefix": instrument}
     RAW_FILE = datalake.raw(extension="html", **PARAMS)
     MASTER_FILE = datalake.master(extension="json", **PARAMS)
     download_task = FilesToStorageOperator(
         task_id=f"download_{instrument}",
         dag=realtime_dag,
-        files=[(RAW_FILE, partial(prices.get_current, instrument))],
+        files=[(RAW_FILE, partial(prices.get_realtime, instrument))],
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
     )
@@ -38,7 +38,7 @@ for instrument in ["equities", "indices"]:
         dag=realtime_dag,
         gcp_conn_id=GCP_CONN_ID,
         bucket_name=BUCKET_NAME,
-        handlers=[(RAW_FILE, MASTER_FILE, partial(prices.get_current, instrument))],
+        handlers=[(RAW_FILE, MASTER_FILE, prices.parse_realtime)],
     )
     upload_task = StorageFilesToFirestoreOperator(
         task_id=f"{instrument}_to_firestore",

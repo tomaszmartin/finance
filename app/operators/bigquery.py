@@ -3,7 +3,7 @@ from typing import Any
 import logging
 
 from airflow.models.baseoperator import BaseOperator
-from airflow.contrib.hooks.bigquery_hook import BigQueryHook
+from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 
 
 class SelectFromBigQuery(BaseOperator):

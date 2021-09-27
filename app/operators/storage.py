@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any, Callable
 
-from airflow.hooks.base_hook import BaseHook
+from airflow.hooks.base import BaseHook
 from airflow.models.baseoperator import BaseOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from google.oauth2 import service_account

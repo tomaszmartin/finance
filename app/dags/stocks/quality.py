@@ -7,12 +7,6 @@ from airflow import DAG
 GCP_CONN_ID = "google_cloud"
 DATASET_ID = "stocks"
 
-dag = DAG(
-    dag_id="stocks_quality",
-    schedule_interval=None,
-    start_date=dt.datetime(2021, 8, 1),
-)
-
 # assert values distinct
 """
 SELECT IF(COUNT(isin_code)=COUNT(DISTINCT(isin_code)), TRUE, FALSE) AS cmp
