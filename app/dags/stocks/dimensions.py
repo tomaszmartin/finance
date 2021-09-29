@@ -51,7 +51,7 @@ CLUSTER = ["isin_code"]
 PARTITIONING = {"type": "MONTH", "field": "date"}
 
 dimensions_dag = DAG(
-    dag_id="stocks_dimensions",
+    dag_id="stocks_dims",
     schedule_interval="@daily",
     start_date=dt.datetime.today() - dt.timedelta(days=3),
 )

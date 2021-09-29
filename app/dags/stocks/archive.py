@@ -51,6 +51,8 @@ for instrument in ["equities", "indices"]:
     RAW_FILE = datalake.raw(extension="html", **PARAMS)
     MASTER_FILE = datalake.master(extension="jsonl", **PARAMS)
     TABLE_ID = instrument
+    # temp table need some kind of timestamp prefix
+    # otheriwse two dagruns can overwirite data
     TEMP_TABLE_ID = TABLE_ID + "_temp{{ ds_nodash }}"
 
     create_dataset = BigQueryCreateEmptyDatasetOperator(
@@ -66,17 +68,6 @@ for instrument in ["equities", "indices"]:
         bigquery_conn_id=GCP_CONN_ID,
         dataset_id=DATASET_ID,
         table_id=TABLE_ID,
-        schema_fields=SCHEMA,
-        cluster_fields=CLUSTER,
-        time_partitioning=PARTITIONING,
-        exists_ok=True,
-    )
-    create_temp_table = BigQueryCreateEmptyTableOperator(
-        task_id=f"create_temp_{TABLE_ID}_table",
-        dag=archive_dag,
-        bigquery_conn_id=GCP_CONN_ID,
-        dataset_id=DATASET_ID,
-        table_id=TEMP_TABLE_ID,
         schema_fields=SCHEMA,
         cluster_fields=CLUSTER,
         time_partitioning=PARTITIONING,
@@ -108,6 +99,7 @@ for instrument in ["equities", "indices"]:
         source_format="NEWLINE_DELIMITED_JSON",
         write_disposition="WRITE_TRUNCATE",
         schema_fields=SCHEMA,
+        external_table=True,
     )
     replace_in_bq = BigQueryInsertJobOperator(
         dag=archive_dag,
@@ -150,9 +142,7 @@ for instrument in ["equities", "indices"]:
     create_dataset >> create_table
     create_table >> replace_in_bq
 
-    create_dataset >> create_temp_table
     download_raw >> transform_to_master
-    create_temp_table >> upload_to_temp
     transform_to_master >> upload_to_temp
     upload_to_temp >> replace_in_bq
     replace_in_bq >> verify

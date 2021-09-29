@@ -59,17 +59,6 @@ create_table = BigQueryCreateEmptyTableOperator(
     cluster_fields=CLUSTER,
     exists_ok=True,
 )
-create_temp_table = BigQueryCreateEmptyTableOperator(
-    task_id="create_temp_table",
-    dag=currencies_dag,
-    bigquery_conn_id=GCP_CONN_ID,
-    dataset_id=DATASET_ID,
-    table_id=TEMP_TABLE_ID,
-    schema_fields=SCHEMA,
-    cluster_fields=CLUSTER,
-    time_partitioning=PARTITIONING,
-    exists_ok=True,
-)
 download_raw = FilesToStorageOperator(
     task_id="download_data",
     dag=currencies_dag,
@@ -95,6 +84,7 @@ upload_to_temp = GCSToBigQueryOperator(
     source_format="NEWLINE_DELIMITED_JSON",
     write_disposition="WRITE_TRUNCATE",
     schema_fields=SCHEMA,
+    external_table=True,
 )
 replace_in_bq = BigQueryInsertJobOperator(
     task_id=f"replace_{TABLE_ID}",
@@ -137,9 +127,7 @@ drop_temp = BigQueryInsertJobOperator(
 create_dataset >> create_table
 create_table >> replace_in_bq
 
-create_dataset >> create_temp_table
 download_raw >> transform_to_master
-create_temp_table >> upload_to_temp
 transform_to_master >> upload_to_temp
 upload_to_temp >> replace_in_bq
 replace_in_bq >> verify
