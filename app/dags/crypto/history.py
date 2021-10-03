@@ -26,11 +26,10 @@ SCHEMA = [
     {"name": "low", "type": "FLOAT64", "mode": "REQUIRED"},
     {"name": "close", "type": "FLOAT64", "mode": "REQUIRED"},
 ]
-CLUSTER = ["coin"]
-PARTITIONING = {"type": "MONTH", "field": "date"}
 
 crypto_dag = DAG(
     dag_id="crypto_history",
+    description="Scrapes historical prices of some popular cryptocurrencies.",
     schedule_interval="@daily",
     start_date=dt.datetime(2021, 8, 1),
 )
@@ -49,8 +48,8 @@ create_table = BigQueryCreateEmptyTableOperator(
     dataset_id=DATASET_ID,
     table_id=TABLE_ID,
     schema_fields=SCHEMA,
-    cluster_fields=CLUSTER,
-    time_partitioning=PARTITIONING,
+    cluster_fields=["coin"],
+    time_partitioning={"type": "MONTH", "field": "date"},
     exists_ok=True,
 )
 download_raw = FilesToStorageOperator(

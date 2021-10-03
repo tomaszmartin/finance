@@ -34,11 +34,10 @@ SCHEMA = [
     {"name": "trade_volume", "type": "FLOAT64", "mode": "REQUIRED"},
     {"name": "turnover_value", "type": "FLOAT64", "mode": "REQUIRED"},
 ]
-CLUSTER = ["isin_code"]
-PARTITIONING = {"type": "MONTH", "field": "date"}
 
 archive_dag = DAG(
     dag_id="gpw_history",
+    description="Scrapes historical prices of equities and indices on GPW.",
     schedule_interval="15 17 * * 1-5",
     start_date=dt.datetime.today() - dt.timedelta(days=3),
 )
@@ -63,11 +62,10 @@ for instrument in ["equities", "indices"]:
         dataset_id=DATASET_ID,
         table_id=TABLE_ID,
         schema_fields=SCHEMA,
-        cluster_fields=CLUSTER,
-        time_partitioning=PARTITIONING,
+        cluster_fields=["isin_code"],
+        time_partitioning={"type": "MONTH", "field": "date"},
         exists_ok=True,
     )
-
     download_raw = FilesToStorageOperator(
         task_id=f"download_{instrument}",
         dag=archive_dag,

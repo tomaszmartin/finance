@@ -28,12 +28,11 @@ SCHEMA = [
     {"name": "base", "type": "STRING", "mode": "REQUIRED"},
     {"name": "rate", "type": "FLOAT64", "mode": "REQUIRED"},
 ]
-PARTITIONING = {"type": "MONTH", "field": "date"}
-CLUSTER = ["currency"]
 
 
 currencies_dag = DAG(
     dag_id="currencies_history",
+    description="Scrapes historical prices of currencies.",
     schedule_interval="@daily",
     start_date=dt.datetime(2021, 8, 1),
 )
@@ -52,8 +51,8 @@ create_table = BigQueryCreateEmptyTableOperator(
     dataset_id=DATASET_ID,
     table_id=TABLE_ID,
     schema_fields=SCHEMA,
-    time_partitioning=PARTITIONING,
-    cluster_fields=CLUSTER,
+    time_partitioning={"type": "MONTH", "field": "date"},
+    cluster_fields=["currency"],
     exists_ok=True,
 )
 download_raw = FilesToStorageOperator(
