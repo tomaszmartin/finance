@@ -1,6 +1,4 @@
 """Verifies the quality of stocks data."""
-import datetime as dt
-
 from airflow import DAG
 
 

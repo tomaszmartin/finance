@@ -17,7 +17,7 @@ GCP_CONN_ID = "google_cloud"
 BUCKET_NAME = "stocks_dl"
 
 realtime_dag = DAG(
-    dag_id="stocks_realtime",
+    dag_id="gpw_realtime",
     schedule_interval="0 9-17 * * 1-5",
     start_date=dt.datetime.today() - dt.timedelta(days=1),
 )

@@ -7,7 +7,7 @@ from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCreateEmptyTableOperator,
 )
 
-from app.operators.bigquery import SelectFromBigQuery
+from app.operators.bigquery import SelectFromBigQueryOperator
 
 
 GCP_CONN_ID = "google_cloud"
@@ -51,12 +51,12 @@ CLUSTER = ["isin_code"]
 PARTITIONING = {"type": "MONTH", "field": "date"}
 
 dimensions_dag = DAG(
-    dag_id="stocks_dims",
+    dag_id="gpw_dims",
     schedule_interval="@daily",
     start_date=dt.datetime.today() - dt.timedelta(days=3),
 )
 
-get_isin_codes = SelectFromBigQuery(
+get_isin_codes = SelectFromBigQueryOperator(
     task_id=CODES_TASK,
     dag=dimensions_dag,
     gcp_conn_id=GCP_CONN_ID,

@@ -35,5 +35,5 @@ def generate_file(
     return result
 
 
-raw = partial(generate_file, layer="raw", with_timestamp=True)
+raw = partial(generate_file, layer="raw")
 master = partial(generate_file, layer="master")

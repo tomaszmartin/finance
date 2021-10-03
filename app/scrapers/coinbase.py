@@ -6,27 +6,15 @@ from airflow.providers.http.hooks.http import HttpHook
 
 COINS = [
     "ADA",
-    "BCH",
     "BTC",
     "BTT",
     "BNB",
-    "BUSD",
     "DASH",
     "DOGE",
-    "DOT",
-    "EOS",
     "ETH",
     "ETC",
-    "FLOW",
-    "GRT",
-    "ICP",
     "LTC",
     "LUNA",
-    "SAND",
-    "SOL",
-    "TRX",
-    "USDC",
-    "XRP",
     "XLM",
 ]
 

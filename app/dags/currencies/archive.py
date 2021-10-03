@@ -2,19 +2,16 @@
 import datetime as dt
 
 from airflow import DAG
-from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
-    GCSToBigQueryOperator,
-)
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryCreateEmptyDatasetOperator,
     BigQueryCreateEmptyTableOperator,
-    BigQueryInsertJobOperator,
 )
 
 from app.operators.storage import FilesToStorageOperator, TransformStorageFilesOperator
+from app.operators.bigquery import UpsertGCSToBigQueryOperator
 from app.scrapers import currencies
-from app.tools import datalake, sql
+from app.tools import datalake
 
 
 GCP_CONN_ID = "google_cloud"
@@ -73,35 +70,16 @@ transform_to_master = TransformStorageFilesOperator(
     bucket_name=BUCKET_NAME,
     handlers=[(RAW_FILE, MASTER_FILE, currencies.parse_data)],
 )
-upload_to_temp = GCSToBigQueryOperator(
-    task_id="upload_temp",
-    dag=currencies_dag,
-    bigquery_conn_id=GCP_CONN_ID,
-    google_cloud_storage_conn_id=GCP_CONN_ID,
-    bucket=BUCKET_NAME,
-    source_objects=[MASTER_FILE],
-    destination_project_dataset_table=f"{DATASET_ID}.{TEMP_TABLE_ID}",
-    source_format="NEWLINE_DELIMITED_JSON",
-    write_disposition="WRITE_TRUNCATE",
-    schema_fields=SCHEMA,
-    external_table=True,
-)
-replace_in_bq = BigQueryInsertJobOperator(
-    task_id=f"replace_{TABLE_ID}",
+upsert_data = UpsertGCSToBigQueryOperator(
+    task_id=f"upsert_to_{TABLE_ID}",
     dag=currencies_dag,
     gcp_conn_id=GCP_CONN_ID,
-    configuration={
-        "query": {
-            "query": sql.replace_from_temp_bigquery(
-                dataset=DATASET_ID,
-                dest_table=TABLE_ID,
-                temp_table=TEMP_TABLE_ID,
-                delete_using="date",
-            ),
-            "useLegacySql": False,
-        }
-    },
-    location="EU",
+    bucket=BUCKET_NAME,
+    source_objects=[MASTER_FILE],
+    source_format="NEWLINE_DELIMITED_JSON",
+    dataset_id=DATASET_ID,
+    table_id=TABLE_ID,
+    schema_fields=SCHEMA,
 )
 verify = BigQueryCheckOperator(
     task_id="verify_data",
@@ -111,24 +89,12 @@ verify = BigQueryCheckOperator(
     params={"table": f"{DATASET_ID}.{TABLE_ID}"},
     use_legacy_sql=False,
 )
-drop_temp = BigQueryInsertJobOperator(
-    task_id=f"drop_temp_{TABLE_ID}",
-    dag=currencies_dag,
-    gcp_conn_id=GCP_CONN_ID,
-    configuration={
-        "query": {
-            "query": f"DROP TABLE {DATASET_ID}.{TEMP_TABLE_ID};",
-            "useLegacySql": False,
-        }
-    },
-    location="EU",
+
+(
+    create_dataset
+    >> create_table
+    >> download_raw
+    >> transform_to_master
+    >> upsert_data
+    >> verify
 )
-
-create_dataset >> create_table
-create_table >> replace_in_bq
-
-download_raw >> transform_to_master
-transform_to_master >> upload_to_temp
-upload_to_temp >> replace_in_bq
-replace_in_bq >> verify
-verify >> drop_temp

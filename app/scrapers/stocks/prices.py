@@ -92,7 +92,6 @@ def parse_realtime(stocks_data: bytes, datetime: dt.datetime):
     """
     soup = BeautifulSoup(stocks_data, "lxml")
     main = soup.select(".table")[-1]
-    logging.info(f"MAIN {main}")
     column_names = get_column_names(main)[:12]
     rows = main.select("tr:not(.footable-group-row):not(.summary)")[1:]
     records: List[Dict[str, Any]] = []
@@ -113,7 +112,6 @@ def get_column_names(soup: BeautifulSoup) -> list[str]:
         list of columns
     """
     header = soup.find("thead")
-    logging.info(f"HEADER {header}")
     columns_names = [utils.to_snake(tag.text) for tag in header.find_all("th")]
     return columns_names
 
