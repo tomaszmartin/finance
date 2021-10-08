@@ -8,7 +8,7 @@ import requests
 from app import utils
 
 
-def get_data(execution_date: dt.datetime, isin_code: str, fact_type: str) -> bytes:
+def get_data(isin_code: str, fact_type: str) -> bytes:
     """Extracts facts about a company for a given tab.
 
     Args:
@@ -30,7 +30,7 @@ def get_data(execution_date: dt.datetime, isin_code: str, fact_type: str) -> byt
 
 
 def parse_data(
-    data: bytes, execution_date: dt.datetime, isin_code: str, fact_type: str
+    data: bytes, isin_code: str, fact_type: str, execution_date: dt.datetime
 ) -> list[dict[str, Any]]:
     """Parses data in html into a list of dicts."""
     soup = BeautifulSoup(data, "lxml")

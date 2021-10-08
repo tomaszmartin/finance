@@ -84,7 +84,7 @@ for instrument in ["equities", "indices"]:
         task_id=f"upsert_to_{TABLE_ID}",
         dag=archive_dag,
         gcp_conn_id=GCP_CONN_ID,
-        bucket=BUCKET_NAME,
+        bucket_name=BUCKET_NAME,
         source_objects=[MASTER_FILE],
         source_format="NEWLINE_DELIMITED_JSON",
         dataset_id=DATASET_ID,

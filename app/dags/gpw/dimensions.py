@@ -3,19 +3,24 @@ import datetime as dt
 
 from airflow import DAG
 from airflow.providers.google.cloud.operators.bigquery import (
+    BigQueryCheckOperator,
     BigQueryCreateEmptyDatasetOperator,
     BigQueryCreateEmptyTableOperator,
 )
 
-from app.operators.bigquery import SelectFromBigQueryOperator
+from app.operators.bigquery import (
+    SelectFromBigQueryOperator,
+    UpsertGCSToBigQueryOperator,
+)
+from app.operators.gpw import DimensionToGCSOperator, TransformDimensionOperator
 
 
 GCP_CONN_ID = "google_cloud"
 DATASET_ID = "stocks"
 BUCKET_NAME = "stocks_dl"
 STOCK_TABLE = "equities"
-CODES_TASK = "get_stocks_list"
-SCHEMA = {
+XCOM_KEY = "get_stocks_list"
+SCHEMAS = {
     "info": [
         {"name": "date", "type": "DATE", "mode": "REQUIRED"},
         {"name": "isin_code", "type": "STRING", "mode": "REQUIRED"},
@@ -47,25 +52,26 @@ SCHEMA = {
         {"name": "pe", "type": "FLOAT64", "mode": "NULLABLE"},
     ],
 }
-CLUSTER = ["isin_code"]
-PARTITIONING = {"type": "MONTH", "field": "date"}
 
 dimensions_dag = DAG(
     dag_id="gpw_dims",
+    description="Scrapes information about equities on GPW.",
     schedule_interval="@daily",
     start_date=dt.datetime.today() - dt.timedelta(days=3),
 )
 
 get_isin_codes = SelectFromBigQueryOperator(
-    task_id=CODES_TASK,
+    task_id=XCOM_KEY,
     dag=dimensions_dag,
     gcp_conn_id=GCP_CONN_ID,
-    sql=f"SELECT DISTINCT(isin_code) FROM `{DATASET_ID}.{STOCK_TABLE}` "
-    + 'WHERE date >= "{{ execution_date.subtract(days=3).date() }}"',
+    sql=f"SELECT DISTINCT(isin_code) FROM `{DATASET_ID}.{STOCK_TABLE}`"
+    + ' WHERE date >= "{{ execution_date.subtract(days=3).date() }}"',
 )
 for fact_type in ["info", "indicators"]:
     TABLE_ID = f"dim_{fact_type}"
-    TEMP_TABLE_ID = TABLE_ID + "_temp{{ ds_nodash }}"
+    SCHEMA = SCHEMAS[fact_type]
+    ARGS = {"process": "gpw", "dataset": f"dim_{fact_type}", "extension": "jsonl"}
+    PREFIX = f'master/{ARGS["process"]}/{ARGS["dataset"]}'
 
     create_dataset = BigQueryCreateEmptyDatasetOperator(
         task_id=f"create_{fact_type}_dataset",
@@ -80,25 +86,56 @@ for fact_type in ["info", "indicators"]:
         bigquery_conn_id=GCP_CONN_ID,
         dataset_id=DATASET_ID,
         table_id=TABLE_ID,
-        schema_fields=SCHEMA[fact_type],
-        cluster_fields=CLUSTER,
-        time_partitioning=PARTITIONING,
+        schema_fields=SCHEMA,
+        cluster_fields=["isin_code"],
+        time_partitioning={"type": "MONTH", "field": "date"},
         exists_ok=True,
     )
-    create_temp_table = BigQueryCreateEmptyTableOperator(
-        task_id=f"create_temp_{fact_type}_table",
+    download_raw = DimensionToGCSOperator(
+        task_id=f"download_raw_{fact_type}",
         dag=dimensions_dag,
-        bigquery_conn_id=GCP_CONN_ID,
-        dataset_id=DATASET_ID,
-        table_id=TEMP_TABLE_ID,
-        schema_fields=SCHEMA[fact_type],
-        cluster_fields=CLUSTER,
-        time_partitioning=PARTITIONING,
-        exists_ok=True,
+        gcp_conn_id=GCP_CONN_ID,
+        bucket_name=BUCKET_NAME,
+        fact_type=fact_type,
+        from_xcom=XCOM_KEY,
+        path_args=ARGS,
     )
-    # download raw
-    # transform to master
-    # upload bq to temp
-    # replace in transaction
-    # verify data
-    # delete temp table
+    transform_to_master = TransformDimensionOperator(
+        task_id=f"transform_{fact_type}_to_master",
+        dag=dimensions_dag,
+        gcp_conn_id=GCP_CONN_ID,
+        bucket_name=BUCKET_NAME,
+        fact_type=fact_type,
+        from_xcom=XCOM_KEY,
+        path_args=ARGS,
+    )
+    upsert_data = UpsertGCSToBigQueryOperator(
+        task_id=f"upsert_to_{TABLE_ID}",
+        dag=dimensions_dag,
+        gcp_conn_id=GCP_CONN_ID,
+        bucket_name=BUCKET_NAME,
+        source_prefix=PREFIX,
+        source_format="NEWLINE_DELIMITED_JSON",
+        dataset_id=DATASET_ID,
+        table_id=TABLE_ID,
+        schema_fields=SCHEMA,
+    )
+
+    verify = BigQueryCheckOperator(
+        task_id=f"verify_{fact_type}",
+        dag=dimensions_dag,
+        gcp_conn_id=GCP_CONN_ID,
+        sql='SELECT date FROM {{params.table}} WHERE date = "{{ds}}"',
+        params={"table": f"{DATASET_ID}.{TABLE_ID}"},
+        use_legacy_sql=False,
+    )
+
+    (
+        get_isin_codes
+        >> create_dataset
+        >> create_table
+        >> download_raw
+        >> transform_to_master
+        >> upsert_data
+        >> verify
+    )
