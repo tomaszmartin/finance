@@ -23,7 +23,7 @@
     scopes:
       - https://www.googleapis.com/auth/compute
     state: present
-  register: address
+  register: airflow_ip
 
 - name: Provision | Create a firewall rule
   google.cloud.gcp_compute_firewall:
@@ -56,7 +56,7 @@
       - network: null # use default
         access_configs:
           - name: "External NAT"
-            nat_ip: "{{ address }}"
+            nat_ip: "{{ airflow_ip }}"
             type: "ONE_TO_ONE_NAT"
     zone: "{{ gcp_zone }}"
     project: "{{ gcp_project }}"
@@ -72,4 +72,15 @@
   register: instance
 
 - name: Provision | Wait for SSH to come up
-  wait_for: host={{ address.address }} port=22 delay=10 timeout=60
+  wait_for: host={{ airflow_ip.address }} port=22 delay=10 timeout=60
+
+- name: Provision | Create hosts.ini file
+  delegate_to: localhost
+  template:
+    src: "hosts.ini.j2"
+    dest: "hosts.ini"
+
+- debug:
+    msg:
+      - "Inventory file `hosts.ini` created"
+      - "Host IP: {{ airflow_ip.address }}"

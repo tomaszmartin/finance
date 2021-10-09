@@ -7,6 +7,7 @@
     virtualenv: "{{ venv_dir }}"
     virtualenv_command: "{{ venv_cmd }}"
   with_lines: cat ./requirements.txt
+  tags: app
 
 - name: App | Copy files
   become: true
@@ -14,3 +15,16 @@
   synchronize:
     src: "./app/"
     dest: "{{ app_home }}/app/"
+  tags: app
+
+- name: App | Restart services
+  become: true
+  become_method: sudo
+  systemd:
+    name: "{{ item }}"
+    state: restarted
+    enabled: yes
+  with_items:
+    - airflow-webserver
+    - airflow-scheduler
+  tags: app
