@@ -1,5 +1,5 @@
 """Contains Operators for working with Google BigQuery."""
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 import logging
 
 from airflow.models.baseoperator import BaseOperator
@@ -78,6 +78,7 @@ class UpsertGCSToBigQueryOperator(BaseOperator):
             schema_fields=self.schema_fields,
             source_uris=source_uris,
         )
+        logging.info("External table from %s.", source_uris)
         # Replace data from external table
         replace_query = replace_from_temp(
             dataset_id=self.dataset_id,
@@ -141,22 +142,22 @@ class BigQueryValidateDataOperator(BaseOperator):
         self,
         gcp_conn_id: str,
         sql: str,
-        key: str,
-        params: dict[str, Any],
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
         self.gcp_conn_id = gcp_conn_id
         self.sql = sql
-        self.key = key
-        self.params = params
 
     def execute(self, context: Any) -> None:
         bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
-        params = {**self.params, **context}
-        sql = self.render_template(self.sql, params)
-        results = bq_hook.get_pandas_df(sql=sql)
+        results = bq_hook.get_pandas_df(sql=self.sql)
         data = results.to_dict("records")
         for row in data:
-            if not row[self.key]:
+            if not self.verify(row):
                 raise AssertionError(f"Condition not met for {row}.")
+
+    @staticmethod
+    def verify(row: Dict[str, Any]) -> bool:
+        empty = not row
+        all_true = all(row.values())
+        return not empty and all_true

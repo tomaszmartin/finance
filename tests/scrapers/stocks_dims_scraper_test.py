@@ -3,7 +3,7 @@ from app.scrapers.stocks import dimensions
 
 def test_parsing_company_info(company_info):
     data, isin_code, execution_date = company_info
-    parsed = dimensions.parse_data(data, execution_date, isin_code, "info")
+    parsed = dimensions.parse_data(data, isin_code, "info", execution_date)
     assert parsed == [
         {
             "date": execution_date.date(),
@@ -27,7 +27,7 @@ def test_parsing_company_info(company_info):
 
 def test_parsing_company_indicators(company_indicators):
     data, isin_code, execution_date = company_indicators
-    parsed = dimensions.parse_data(data, execution_date, isin_code, "indicators")
+    parsed = dimensions.parse_data(data, isin_code, "indicators", execution_date)
     assert parsed == [
         {
             "date": execution_date.date(),

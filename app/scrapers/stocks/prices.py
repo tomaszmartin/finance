@@ -113,6 +113,7 @@ def get_column_names(soup: BeautifulSoup) -> list[str]:
     """
     header = soup.find("thead")
     columns_names = [utils.to_snake(tag.text) for tag in header.find_all("th")]
+    columns_names = [col if col != "currency" else "base" for col in columns_names]
     return columns_names
 
 

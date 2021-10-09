@@ -9,7 +9,7 @@ def test_parsing_archive_equities(archive_equities):
         "date": execution_date.date(),
         "name": "06MAGNA",
         "isin_code": "PLNFI0600010",
-        "currency": "PLN",
+        "base": "PLN",
         "opening_price": 1.5500,
         "closing_price": 1.6300,
         "minimum_price": 1.5500,
@@ -27,7 +27,7 @@ def test_parsing_archive_indices(archive_indices):
     assert parsed[0] == {
         "name": "CEEplus",
         "isin_code": "PL9999998948",
-        "currency": "PLN",
+        "base": "PLN",
         "opening_price": 0.0,
         "maximum_price": 0.0,
         "minimum_price": 0.0,
@@ -47,7 +47,7 @@ def test_parsing_realtime_equities(realtime_equities):
         "name": "06MAGNA",
         "shortcut": "06N",
         "isin_code": "PLNFI0600010",
-        "currency": "PLN",
+        "base": "PLN",
         "last_transaction_time": "17:00:00",
         "reference_price": 2.3400,
         "theoretical_open_price": None,
@@ -64,9 +64,6 @@ def test_parsing_realtime_indices(realtime_indices):
     data, execution_date = realtime_indices
     parsed = prices.parse_realtime(data, execution_date)
     assert len(parsed) == 43
-    from pprint import pprint
-
-    pprint(parsed[0])
     assert parsed[0] == {
         "index": "WIG20",
         "number_of_companies": 20.0,

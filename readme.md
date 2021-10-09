@@ -18,29 +18,46 @@ Data is extracted using Airflow DAGs, which utilize 3 different sources:
 * [CoinAPI](https://www.coinapi.io) for cryptocurrency data.
 
 There are following DAGs defined in the project:
-* **Equities** 
-    * Historical prices that are extracted from [offical website](https://www.gpw.pl), first saved in `html` format on Google Cloud Storage, and then parsed and saved in BigQuery table.
-    * Current prices that are extracted from [offical website](https://www.gpw.pl), first saved in `html` format on Google Cloud Storage, and then parsed and saved in Firestore.
-    * Informations about the equities, first saved in `html` format on Google Cloud Storage, and then parsed and saved in BigQuery table.
-* **Indices** 
-    * Historical prices that is extracted for execution date, first saved in `html` format on Google Cloud Storage, and then parsed and saved in BigQuery table.
-    * Current prices that are extracted from [offical website](https://www.gpw.pl), first saved in `html` format on Google Cloud Storage, and then parsed and saved in Firestore.
-* **Currencies**
-    * Exchange rates downloaded from [exchangerate.host API](https://exchangerate.host/#/), first saved in `json` format on Google Cloud Storage, and then saved in BigQuery table.
-    * Current prices that are extracted from [exchangerate.host API](https://exchangerate.host/#/), first saved in `json` format on Google Cloud Storage, and then parsed and saved in Firestore.
-* **Cryptocurrencies**
-    * Prices of Cryptocurrencies from [CoinAPI](https://www.coinapi.io), first saved in `json` format on Google Cloud Storage, and then saved in BigQuery table.
-    * Current prices that are extracted from [CoinAPI](https://www.coinapi.io), first saved in `json` format on Google Cloud Storage, and then parsed and saved in Firestore.
+* **Equities** data from from [offical website](https://www.gpw.pl)
+    * Historical prices are saved in BigQuery.
+    * Current prices are saved in Firestore.
+    * Informations/dimensions are saved in BigQuery table.
+* **Indices** data from from [offical website](https://www.gpw.pl)
+    * Historical prices saved in BigQuery table.
+    * Current prices are saved in Firestore.
+* **Currencies** from [exchangerate.host API](https://exchangerate.host/#/)
+    * Historical exchange rates saved in BigQuery table.
+    * Current exchange rates saved in Firestore.
+* **Cryptocurrencies** from [CoinAPI](https://www.coinapi.io)
+    * Historical exchange rates saved in BigQuery table.
+    * Current exchange rates saved in Firestore.
 
 There are three components used in terms of storing data:
 
-* Google Cloud Storage with serves as a data lake.
+* Google Cloud Storage which serves as a Data Lake.
 * BigQuery that works as a data warehouse solution for historical data, which is best suited for analysis and can handle large amounts of data very efficiently.
-* Firestore that holds current data and works as a mobile backend. Only the most fresh data is kept inside Firestore so the size wof data kept their will stay small on more or less the same level.
+* Firestore that holds current data and works as a mobile backend. Only the current data is kept in Firestore.
+
+The logic of DAGs is more or less similar:
+* Data is extracted and stored in Data Lake `raw zone` in a format as close to the original as possible.
+* Data is transformed/parsed and saved in Data Lake `master zone`, usually in `json new line` format.
+* Data is then stored in the destination Database - BigQuery or Firestore depending on the purpose.
+* There is some simple validation of the data.
 
 # Data model
 
-The final data model has the following
+The final data model is divided into three datasets:
+* `gpw` dataset that contains GPW data in four different tables:
+    * historical `equities` prices.
+    * historical `indices` prices.
+    * `dim_equities_indicators` containing indicators information about the equities.
+    * `dim_equities_info` containing information about the equities.
+* `currencies` dataset containing currencies data:
+    * historical exchange `rates`.
+* `cryptocurrencies` containing crypto data:
+    * historical `rates` of most popular coins.
+
+In each DAG definition there is a schema for each of the tables, specified in `config.py` files in DAGs directory.
 
 # Running the project
 
@@ -56,6 +73,7 @@ Creating local environment:
 6. Add admin user to Airflow `airflow users create --username user --password pass --firstname f --lastname l --email e --role Admin`.
 7. Run `airflow webserver` and `airflow scheduler`.
 8. Local structure should mimic the behaviour in production.
+9. Add connections according to information from next section.
 
 All this steps have to be done for the first launch. Next runs will require steps 2, 4 (if You add new dependencies) and 7.
 
@@ -100,10 +118,12 @@ After adding these files You can:
 * Configure the environment `ansible-playbook configure.yml -i hosts.ini`.
 * Deploy the app by running `ansible-playbook deploy.yml -i hosts.ini`.
 
+## Connections
+
 After deployment You should add connections to the Airflow:
 * Google Cloud Platform connection named `google_cloud`:
     * Kefile JSON: contents of `json` key for Service Account with permission to BigQuery and Google Cloud Storage
 * HTTP connection for [CoinAPI](https://www.coinapi.io):
     * Host: `rest.coinapi.io`
     * Schema: `https`
-    * Extra: `{'X-CoinAPI-Key' : 'APIKEY'}`
+    * Extra: `{"X-CoinAPI-Key": "APIKEY"}`

@@ -22,3 +22,37 @@ def replace_from_temp(
             ROLLBACK TRANSACTION;
         END;
     """
+
+
+def distinct(
+    column: str,
+    table_id: str,
+    since: str = "{{ execution_date.subtract(days=30).date() }}",
+    date_col: str = "date",
+):
+    return f"""
+        SELECT IF(COUNT({column})=COUNT(DISTINCT({column})), TRUE, FALSE) AS cmp
+        FROM {table_id} 
+        WHERE {date_col} >= '{since}' GROUP BY {date_col};
+    """
+
+
+def count_in_time(
+    column: str,
+    table_id: str,
+    first_date: str = "{{ ds }}",
+    second_date: str = "{{ prev_ds }}",
+    margin: float = 0.1,
+):
+    return f"""
+        WITH today AS (
+            SELECT COUNT({column}) AS cnt
+            FROM {table_id} WHERE date = "{first_date}" GROUP BY date
+        ), yesterday AS (
+            SELECT COUNT(isin_code) AS cnt
+            FROM {table_id} WHERE date = "{second_date}" GROUP BY date
+        )
+        SELECT
+            IF((today.cnt/yesterday.cnt > {1.0 - margin}) AND (today.cnt/yesterday.cnt < {1.0 + margin}), TRUE, FALSE) as cmp
+        FROM today CROSS JOIN yesterday;
+    """
