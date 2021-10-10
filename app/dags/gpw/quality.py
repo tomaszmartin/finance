@@ -21,7 +21,12 @@ with DAG(
         check_distinct = BigQueryValidateDataOperator(
             task_id=f"check_distinct_{TABLE_ID}",
             gcp_conn_id=config.GCP_CONN_ID,
-            sql=sql.distinct("isin_code", TABLE_ID),
+            sql=sql.distinct(
+                column="isin_code",
+                table_id=TABLE_ID,
+                where="date >= '{{ execution_date.subtract(days=30).date() }}'",
+                groupby="date",
+            ),
         )
         # Assert count +/-10% last day
         check_count = BigQueryValidateDataOperator(

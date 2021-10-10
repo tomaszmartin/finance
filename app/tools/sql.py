@@ -1,4 +1,5 @@
 """Contains functions for generarting sql queries."""
+from typing import Optional
 
 
 def replace_from_temp(
@@ -27,14 +28,23 @@ def replace_from_temp(
 def distinct(
     column: str,
     table_id: str,
-    since: str = "{{ execution_date.subtract(days=30).date() }}",
-    date_col: str = "date",
+    where: Optional[str] = None,
+    groupby: Optional[str] = None,
 ):
-    return f"""
-        SELECT IF(COUNT({column})=COUNT(DISTINCT({column})), TRUE, FALSE) AS cmp
-        FROM {table_id} 
-        WHERE {date_col} >= '{since}' GROUP BY {date_col};
+    qry = f"""
+        SELECT 
+        CASE
+            WHEN COUNT({column}) = COUNT(DISTINCT({column}))
+            THEN true
+            ELSE false
+        END AS cmp
+        FROM {table_id}
     """
+    if where:
+        qry += f" WHERE {where}"
+    if groupby:
+        qry += f" GROUP BY {groupby}"
+    return qry
 
 
 def count_in_time(
@@ -49,7 +59,7 @@ def count_in_time(
             SELECT COUNT({column}) AS cnt
             FROM {table_id} WHERE date = "{first_date}" GROUP BY date
         ), yesterday AS (
-            SELECT COUNT(isin_code) AS cnt
+            SELECT COUNT({column}) AS cnt
             FROM {table_id} WHERE date = "{second_date}" GROUP BY date
         )
         SELECT

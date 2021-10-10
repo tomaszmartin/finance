@@ -71,6 +71,7 @@ with DAG(
         use_legacy_sql=False,
     )
 
+    # pylint: disable=pointless-statement
     (
         create_dataset
         >> create_table
