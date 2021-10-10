@@ -37,4 +37,5 @@ with DAG(
         key_column="coin",
     )
 
+    # pylint: disable=pointless-statement
     (download_task >> transform_task >> upload_task)

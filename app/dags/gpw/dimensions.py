@@ -87,6 +87,7 @@ with DAG(
             use_legacy_sql=False,
         )
 
+        # pylint: disable=pointless-statement
         (
             get_isin_codes
             >> create_dataset

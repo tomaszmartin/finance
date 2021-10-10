@@ -29,6 +29,16 @@ class SelectFromBigQueryOperator(BaseOperator):
 
 
 class UpsertGCSToBigQueryOperator(BaseOperator):
+    """Upsert data from Google Cloud Storage objects
+    into Google BigQuery table.
+
+    Upsert is divided into following phases:
+        * Creating external table from GCS objects.
+        * Extracting values from external table for 'delete_using' key.
+        * Deleting rows from destination table with extracted values.
+        * Appending external table to destination table.
+        * Dropping external table.
+    """
 
     template_fields = ["source_objects"]
 
@@ -100,6 +110,12 @@ class UpsertGCSToBigQueryOperator(BaseOperator):
         )
 
     def get_source_uris(self, ds_nodash: str) -> list[str]:
+        """Returns source URIs. URIs can be created:
+            * Using provided surce objects and bucket name.
+            * Using provided source prefix by listing files in the bucket
+              and picking files with the same prefix.
+        Both methods can be used to return the full list.
+        """
         source_uris = []
         if self.source_objects:
             source_uris.extend(
@@ -112,7 +128,7 @@ class UpsertGCSToBigQueryOperator(BaseOperator):
             result = [f"gs://{self.bucket_name}/{src}" for src in result]
             source_uris.extend(result)
 
-        logging.info(f"Found source uris: {source_uris}.")
+        logging.info("Found source uris: %s.", source_uris)
         if not source_uris:
             raise ValueError("No source uris GCP objects found.")
         return source_uris

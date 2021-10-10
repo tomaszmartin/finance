@@ -44,4 +44,5 @@ with DAG(
             key_column="isin_code",
         )
 
+        # pylint: disable=pointless-statement
         (download_task >> transform_task >> upload_task)

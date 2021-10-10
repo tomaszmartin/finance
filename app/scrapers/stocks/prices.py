@@ -1,6 +1,5 @@
 """Helper functions for scraping and parsing data for GPW Polish Stock Exchange."""
 import datetime as dt
-import logging
 from typing import Any, Dict, List
 import urllib.parse as urlparse
 from urllib.parse import parse_qs

@@ -1,8 +1,5 @@
+"""Contains Operators for working with GPW dimension data."""
 import logging
-from airflow.models.base import Base
-from airflow.models.baseoperator import BaseOperator
-
-
 from typing import Any
 
 from airflow.models.baseoperator import BaseOperator
@@ -14,6 +11,11 @@ from app.tools.files import to_bytes
 
 
 class DimensionToGCSOperator(BaseOperator):
+    """Downloads dimensions about companies rates
+    on GPW. It extracts list of isin codes by
+    pulling from 'from_xcom' argument.
+    """
+
     def __init__(
         self,
         gcp_conn_id: str,
@@ -52,6 +54,9 @@ class DimensionToGCSOperator(BaseOperator):
 
 
 class TransformDimensionOperator(BaseOperator):
+    """Transforms dimenions data stored on GCS from raw
+    'html' format into json newline files."""
+
     def __init__(
         self,
         gcp_conn_id: str,

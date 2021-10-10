@@ -1,8 +1,6 @@
 """Keeps config information for the DAG."""
 
 
-"""Contains config for currencies dags."""
-
 GCP_CONN_ID = "google_cloud"
 BUCKET_NAME = "stocks_dl"
 DATASET_ID = "currencies"
