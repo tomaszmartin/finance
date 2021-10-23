@@ -11,5 +11,6 @@ pandas==1.2.4
 pylint==2.9.6
 pytest==6.2.3
 pytest-cov==2.12.1
+pytest-randomly==3.10.1
 requests==2.25.1
 types-requests==2.25.1
