@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+addopts = "tests --cov=app --cov-report=term-missing"
+testpaths = ["tests"]
+
+[tool.mypy]
+ignore_missing_imports = true
