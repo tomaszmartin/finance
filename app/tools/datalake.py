@@ -4,12 +4,12 @@ import logging
 
 
 def generate_file(
-    layer: str = "",
     process: str = "",
     dataset: str = "",
     extension: str = "",
     prefix: str = "",
     with_timestamp: bool = False,
+    layer: str = "",
 ) -> str:
     """Returns a consistent name temaplate for raw layer
     of DataLake. This is where files should be stored
@@ -23,7 +23,7 @@ def generate_file(
         with_timestamp: whether the file should be unique
             for datetime or just date.
     """
-    if (layer == "") or (process == "") or (dataset == "") or (extension == ""):
+    if (not layer) or (not process) or (not dataset) or (not extension):
         raise ValueError("All arguments need to be filled!")
     base = "{{ execution_date.year }}"
     file = "{{ ds_nodash }}"

@@ -4,43 +4,41 @@ from typing import Tuple
 from pytest import fixture
 
 
+def _get_data(file_name: str) -> bytes:
+    with open(f"tests/samples/{file_name}", "rb") as file:
+        return file.read()
+
+
 @fixture
 def archive_equities() -> Tuple[bytes, dt.datetime]:
-    with open("tests/samples/equities.html", "rb") as file:
-        return file.read(), dt.datetime(2021, 1, 4)
+    return _get_data("equities.html"), dt.datetime(2021, 1, 4)
 
 
 @fixture
 def archive_indices() -> Tuple[bytes, dt.datetime]:
-    with open("tests/samples/indices.html", "rb") as file:
-        return file.read(), dt.datetime(2021, 1, 4)
+    return _get_data("indices.html"), dt.datetime(2021, 1, 4)
 
 
 @fixture
 def realtime_equities() -> Tuple[bytes, dt.datetime]:
-    with open("tests/samples/realtime_equities.html", "rb") as file:
-        return file.read(), dt.datetime(2021, 7, 4)
+    return _get_data("realtime_equities.html"), dt.datetime(2021, 7, 4)
 
 
 @fixture
 def realtime_indices() -> Tuple[bytes, dt.datetime]:
-    with open("tests/samples/realitme_indices.html", "rb") as file:
-        return file.read(), dt.datetime(2021, 7, 4)
+    return _get_data("realitme_indices.html"), dt.datetime(2021, 7, 4)
 
 
 @fixture
 def archive_currencies() -> Tuple[bytes, dt.datetime]:
-    with open("tests/samples/currencies.xml", "rb") as file:
-        return file.read(), dt.datetime(2021, 7, 5)
+    return _get_data("currencies.xml"), dt.datetime(2021, 7, 5)
 
 
 @fixture
-def company_info() -> Tuple[bytes, dt.datetime]:
-    with open("tests/samples/company_info.html", "rb") as file:
-        return file.read(), "PL11BTS00015", dt.datetime(2021, 7, 4)
+def company_info() -> Tuple[bytes, str, dt.datetime]:
+    return _get_data("company_info.html"), "PL11BTS00015", dt.datetime(2021, 7, 4)
 
 
 @fixture
-def company_indicators() -> Tuple[bytes, dt.datetime]:
-    with open("tests/samples/company_indicators.html", "rb") as file:
-        return file.read(), "PLGPW0000017", dt.datetime(2021, 7, 4)
+def company_indicators() -> Tuple[bytes, str, dt.datetime]:
+    return _get_data("company_indicators.html"), "PLGPW0000017", dt.datetime(2021, 7, 4)
