@@ -1,3 +1,7 @@
+from unittest import mock
+
+import pytest
+
 from app.scrapers.stocks import dimensions
 
 
@@ -42,3 +46,26 @@ def test_parsing_company_indicators(company_indicators):
             "pe": 11.70,
         }
     ]
+
+
+@mock.patch("app.scrapers.stocks.dimensions.requests.get")
+def test_downloading_info(mock_get):
+    dimensions.get_data("ISIN_CODE", "info")
+    mock_get.assert_called_with(
+        "https://www.gpw.pl/ajaxindex.php"
+        "?start=infoTab&format=html&action=GPWListaSp&gls_isin=ISIN_CODE&lang=EN"
+    )
+
+
+@mock.patch("app.scrapers.stocks.dimensions.requests.get")
+def test_downloading_indicators(mock_get):
+    dimensions.get_data("ISIN_CODE", "indicators")
+    mock_get.assert_called_with(
+        "https://www.gpw.pl/ajaxindex.php"
+        "?start=indicatorsTab&format=html&action=GPWListaSp&gls_isin=ISIN_CODE&lang=EN"
+    )
+
+
+def test_downloading_worng_dim():
+    with pytest.raises(ValueError):
+        dimensions.get_data("ISIN_CODE", "ERROR")
