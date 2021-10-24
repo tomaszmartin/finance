@@ -51,16 +51,14 @@ def test_realtime_no_coin(symbol, coinapi_realtime_resp):
         coinapi.parse_realtime(data, for_date=for_date, coin_symbol=symbol)
 
 
-@mock.patch("app.scrapers.coinapi.HttpHook.run")
-def test_downloading_realtime(mock_hook_run):
+def test_downloading_realtime(mock_coinapi_hook):
     coinapi.download_realtime(dt.datetime(2021, 1, 1), "BTC")
-    mock_hook_run.assert_called_with("v1/quotes/BINANCE_SPOT_BTC_USDT/current")
+    mock_coinapi_hook.run.assert_called_with("v1/quotes/BINANCE_SPOT_BTC_USDT/current")
 
 
-@mock.patch("app.scrapers.coinapi.HttpHook.run")
-def test_downloading_historical(mock_hook_run):
+def test_downloading_historical(mock_coinapi_hook):
     coinapi.download_data(dt.datetime(2021, 1, 1), "BTC")
-    mock_hook_run.assert_called_with(
+    mock_coinapi_hook.run.assert_called_with(
         "v1/exchangerate/BTC/USD/history"
         "?period_id=1DAY"
         "&time_start=2021-01-01"

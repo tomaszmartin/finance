@@ -1,5 +1,6 @@
 import datetime as dt
 from typing import Tuple
+from unittest import mock
 
 from pytest import fixture
 
@@ -57,3 +58,9 @@ def coinapi_realtime_resp() -> Tuple[bytes, str, dt.datetime]:
 @fixture
 def currencies_data() -> Tuple[bytes, dt.datetime]:
     return _get_data("currencies.json"), dt.datetime(2021, 10, 9)
+
+
+@fixture
+def mock_coinapi_hook():
+    with mock.patch("app.scrapers.coinapi.HttpHook") as mock_hook:
+        yield mock_hook.return_value
