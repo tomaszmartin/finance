@@ -52,3 +52,8 @@ def coinapi_historical_resp() -> Tuple[bytes, str, dt.datetime]:
 @fixture
 def coinapi_realtime_resp() -> Tuple[bytes, str, dt.datetime]:
     return _get_data("coinapi_realtime.json"), "BTC", dt.datetime(2013, 9, 28)
+
+
+@fixture
+def currencies_data() -> Tuple[bytes, dt.datetime]:
+    return _get_data("currencies.json"), dt.datetime(2021, 10, 9)
