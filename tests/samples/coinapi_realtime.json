@@ -1,0 +1,17 @@
+{
+    "symbol_id": "BINANCE_SPOT_BTC_USDT",
+    "time_exchange": "2021-10-09T15:23:02.3586788Z",
+    "time_coinapi": "2021-10-09T15:23:02.3586788Z",
+    "ask_price": 55106.04000000,
+    "ask_size": 0.29193000,
+    "bid_price": 55106.03000000,
+    "bid_size": 0.71707000,
+    "last_trade": {
+        "time_exchange": "2021-10-09T15:23:02.2150000Z",
+        "time_coinapi": "2021-10-09T15:23:02.3586734Z",
+        "uuid": "77cc524e-2429-47b6-86e0-8931ef4fcab6",
+        "price": 55106.03000000,
+        "size": 0.07498000,
+        "taker_side": "SELL"
+    }
+}

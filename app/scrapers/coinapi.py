@@ -1,5 +1,7 @@
 """Extracts data from a coinbase API."""
 import datetime as dt
+import json
+
 import pandas as pd
 
 from airflow.providers.http.hooks.http import HttpHook
@@ -108,10 +110,21 @@ def parse_realtime(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
     """
     if not coin_symbol:
         raise ValueError("Need to specify coin!")
-    frame = pd.read_json(data)
+    json_data = json.loads(data)
+    frame = pd.json_normalize(json_data)
     frame["coin"] = coin_symbol.upper()
     frame["base"] = "USD"
     frame = frame.drop(
-        columns=["symbol_id", "last_trade", "time_exchange", "time_coinapi"]
+        columns=[
+            "symbol_id",
+            "last_trade.time_exchange",
+            "last_trade.time_coinapi",
+            "last_trade.uuid",
+            "last_trade.price",
+            "last_trade.size",
+            "last_trade.taker_side",
+            "time_exchange",
+            "time_coinapi",
+        ]
     )
     return frame.to_dict("records")

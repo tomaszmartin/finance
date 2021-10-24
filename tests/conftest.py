@@ -42,3 +42,13 @@ def company_info() -> Tuple[bytes, str, dt.datetime]:
 @fixture
 def company_indicators() -> Tuple[bytes, str, dt.datetime]:
     return _get_data("company_indicators.html"), "PLGPW0000017", dt.datetime(2021, 7, 4)
+
+
+@fixture
+def coinapi_historical_resp() -> Tuple[bytes, str, dt.datetime]:
+    return _get_data("coinapi_historical.json"), "BTC", dt.datetime(2013, 9, 28)
+
+
+@fixture
+def coinapi_realtime_resp() -> Tuple[bytes, str, dt.datetime]:
+    return _get_data("coinapi_realtime.json"), "BTC", dt.datetime(2013, 9, 28)
