@@ -3,6 +3,7 @@ import datetime as dt
 from functools import partial
 
 from airflow import DAG
+from airflow.operators.python import ShortCircuitOperator
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryCreateEmptyDatasetOperator,
@@ -15,7 +16,7 @@ from app.operators.storage import (
     FilesToStorageOperator,
     TransformStorageFilesOperator,
 )
-from app.tools import datalake
+from app.tools import datalake, dates
 from app.dags.gpw import config
 
 
@@ -23,9 +24,13 @@ with DAG(
     dag_id="gpw_history",
     description="Scrapes historical prices of equities and indices on GPW.",
     schedule_interval="15 17 * * 1-5",
-    start_date=dt.datetime.today() - dt.timedelta(days=3),
+    start_date=dt.datetime(2021, 11, 1),
     catchup=True,
 ) as dag:
+    check_holidays = ShortCircuitOperator(
+        task_id="check_if_holidays",
+        python_callable=lambda execution_date: not dates.is_holiday(execution_date),
+    )
     for instrument in ["equities", "indices"]:
         PARAMS = {"process": "gpw", "dataset": "historical", "prefix": instrument}
         RAW_FILE = datalake.raw(extension="html", **PARAMS)
@@ -81,7 +86,8 @@ with DAG(
 
         # pylint: disable=pointless-statement
         (
-            create_dataset
+            check_holidays
+            >> create_dataset
             >> create_table
             >> download_raw
             >> transform_to_master

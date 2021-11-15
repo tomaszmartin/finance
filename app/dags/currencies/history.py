@@ -19,7 +19,7 @@ with DAG(
     dag_id="currencies_history",
     description="Scrapes historical prices of currencies.",
     schedule_interval="@daily",
-    start_date=dt.datetime.today() - dt.timedelta(days=3),
+    start_date=dt.datetime(2021, 11, 1),
 ) as dag:
     ARGS = {"process": "currencies", "dataset": "historical"}
     RAW_FILE = datalake.raw(**ARGS, extension="json")

@@ -12,11 +12,12 @@ with DAG(
     dag_id="gpw_quality",
     description="Verifies the quality of GPW data.",
     schedule_interval="@daily",
-    start_date=dt.datetime.today() - dt.timedelta(days=3),
+    start_date=dt.datetime(2021, 11, 1),
 ) as dag:
     for instrument in ["equities", "indices"]:
         TABLE = config.TABLES[instrument]
         TABLE_ID = f"{config.DATASET_ID}.{TABLE}"
+
         # Assert values distinct for key
         check_distinct = BigQueryValidateDataOperator(
             task_id=f"check_distinct_{TABLE_ID}",

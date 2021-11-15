@@ -2,6 +2,7 @@
 import datetime as dt
 
 from airflow import DAG
+from airflow.operators.python import ShortCircuitOperator
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryCreateEmptyDatasetOperator,
@@ -12,6 +13,7 @@ from app.operators.bigquery import (
     SelectFromBigQueryOperator,
     UpsertGCSToBigQueryOperator,
 )
+from app.tools import dates
 from app.operators.gpw import DimensionToGCSOperator, TransformDimensionOperator
 from app.dags.gpw import config
 
@@ -20,10 +22,14 @@ with DAG(
     dag_id="gpw_dims",
     description="Scrapes information about equities on GPW.",
     schedule_interval="@daily",
-    start_date=dt.datetime.today() - dt.timedelta(days=3),
+    start_date=dt.datetime(2021, 11, 1),
 ) as dag:
     XCOM_KEY = "get_stocks_list"
 
+    check_holidays = ShortCircuitOperator(
+        task_id="check_if_holidays",
+        python_callable=lambda execution_date: not dates.is_holiday(execution_date),
+    )
     get_isin_codes = SelectFromBigQueryOperator(
         task_id=XCOM_KEY,
         gcp_conn_id=config.GCP_CONN_ID,
@@ -89,7 +95,8 @@ with DAG(
 
         # pylint: disable=pointless-statement
         (
-            get_isin_codes
+            check_holidays
+            >> get_isin_codes
             >> create_dataset
             >> create_table
             >> download_raw

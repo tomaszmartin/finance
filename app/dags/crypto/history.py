@@ -17,7 +17,7 @@ with DAG(
     dag_id="crypto_history",
     description="Scrapes historical prices of some popular cryptocurrencies.",
     schedule_interval="@daily",
-    start_date=dt.datetime.today() - dt.timedelta(days=3),
+    start_date=dt.datetime(2021, 11, 1),
 ) as dag:
     create_dataset = BigQueryCreateEmptyDatasetOperator(
         task_id="create_dataset",
