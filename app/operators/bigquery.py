@@ -96,18 +96,20 @@ class UpsertGCSToBigQueryOperator(BaseOperator):
             temp_table=temp_table_id,
             delete_using=self.delete_using,
         )
-        bq_hook.insert_job(
-            configuration={"query": {"query": replace_query, "useLegacySql": False}}
-        )
-        # Drop external table
-        bq_hook.insert_job(
-            configuration={
-                "query": {
-                    "query": f"DROP TABLE {self.dataset_id}.{temp_table_id}",
-                    "useLegacySql": False,
+        try:
+            bq_hook.insert_job(
+                configuration={"query": {"query": replace_query, "useLegacySql": False}}
+            )
+        finally:
+            # Drop external table
+            bq_hook.insert_job(
+                configuration={
+                    "query": {
+                        "query": f"DROP TABLE {self.dataset_id}.{temp_table_id}",
+                        "useLegacySql": False,
+                    }
                 }
-            }
-        )
+            )
 
     def get_source_uris(self, ds_nodash: str) -> list[str]:
         """Returns source URIs. URIs can be created:

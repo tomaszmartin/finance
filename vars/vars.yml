@@ -9,7 +9,7 @@ airflow_home: /opt/airflow
 airflow_executor: SequentialExecutor
 airflow_executable: "{{ app_venv }}/bin/airflow"
 airflow_config: "{{ airflow_home }}/airflow.cfg"
-airflow_version: 2.1.0
+airflow_version: 2.2.1
 
 env_var_python_path: "{{ app_home }}:$PYTHONPATH"
 env_var_path: "{{ venv_dir }}/bin:$PATH"

@@ -62,5 +62,5 @@ def currencies_data() -> Tuple[bytes, dt.datetime]:
 
 @fixture
 def mock_coinapi_hook():
-    with mock.patch("app.scrapers.coinapi.HttpHook") as mock_hook:
+    with mock.patch("app.scrapers.coinapi.HttpHook", autospec=True) as mock_hook:
         yield mock_hook.return_value

@@ -36,4 +36,4 @@ def test_dag_correctness(dags):
 
 def test_dag_cycles(dags):
     for dag in dags:
-        dag_cycle_tester.test_cycle(dag)
+        dag_cycle_tester.check_cycle(dag)

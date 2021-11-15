@@ -24,6 +24,7 @@ with DAG(
     description="Scrapes historical prices of equities and indices on GPW.",
     schedule_interval="15 17 * * 1-5",
     start_date=dt.datetime.today() - dt.timedelta(days=3),
+    catchup=True,
 ) as dag:
     for instrument in ["equities", "indices"]:
         PARAMS = {"process": "gpw", "dataset": "historical", "prefix": instrument}
