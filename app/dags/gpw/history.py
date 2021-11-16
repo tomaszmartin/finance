@@ -23,7 +23,7 @@ from app.dags.gpw import config
 with DAG(
     dag_id="gpw_history",
     description="Scrapes historical prices of equities and indices on GPW.",
-    schedule_interval="15 17 * * 1-5",
+    schedule_interval="@daily",
     start_date=dt.datetime(2021, 11, 1),
     catchup=True,
 ) as dag:
