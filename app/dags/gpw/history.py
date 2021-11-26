@@ -28,8 +28,8 @@ with DAG(
     catchup=True,
 ) as dag:
     check_holidays = ShortCircuitOperator(
-        task_id="check_if_holidays",
-        python_callable=lambda execution_date: not dates.is_holiday(execution_date),
+        task_id="check_if_workday",
+        python_callable=lambda execution_date: dates.is_workday(execution_date),
     )
     for instrument in ["equities", "indices"]:
         PARAMS = {"process": "gpw", "dataset": "historical", "prefix": instrument}

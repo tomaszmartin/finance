@@ -25,3 +25,17 @@ def test_polish_holidays():
         assert dates.is_holiday(date)
     for date in non_holidays:
         assert not dates.is_holiday(date)
+
+
+def test_isworkday():
+    days = (
+        (dt.date(2021, 11, 1), False),
+        (dt.date(2021, 11, 2), True),
+        (dt.date(2021, 11, 3), True),
+        (dt.date(2021, 11, 4), True),
+        (dt.date(2021, 11, 5), True),
+        (dt.date(2021, 11, 6), False),
+        (dt.date(2021, 11, 7), False),
+    )
+    for date, result in days:
+        assert dates.is_workday(date) == result
