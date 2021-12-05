@@ -202,12 +202,8 @@ For `dim_equities_indicators`:
 | isin_code               | STRING | REQUIRED  | ISIN code for the equity.                         | PL11BTS00015 |
 | market                  | STRING | REQUIRED  | Market to which the company belongs to.           | Main         |
 | sector                  | STRING | REQUIRED  | Sector to which the company belongs to.           | Video games  |
-| book_value              | FLOAT  | REQUIRED  | Company's book value at the specified date.       | 1.8023E8     |
 | dividend_yield          | FLOAT  | REQUIRED  | Last dividend.                                    | 0.0          |
-| market_value            | FLOAT  | REQUIRED  | Company's market value at the specified date.     | 1.00152E9    |
-| number_of_shares_issued | FLOAT  | REQUIRED  | Number of shares at the specified date.           | 2365421.0    |
-| pbv                     | FLOAT  | REQUIRED  | Price to book value ratio at the specified date.  | 5.56         |
-| pe                      | FLOAT  | REQUIRED  | Price to earnings ratio at the specified date.    | 39.0         |
+| shares_issued           | FLOAT  | REQUIRED  | Number of shares at the specified date.           | 2365421.0    |
 
 For `dim_equities_info`:
 
@@ -226,5 +222,3 @@ For `dim_equities_info`:
 | www                     | STRING | NULLABLE  | Company's website address.                     | www.11bitstudios.pl             |
 | ceo                     | STRING | NULLABLE  | Company's CEO.                                 | Przemysław Marszał              |
 | first_listing           | STRING | REQUIRED  | Company's first listing.                       | 01.2011                         |
-| market_value            | FLOAT  | REQUIRED  | Company's market value at the specified date.  | 1.00152E9                       |
-| number_of_shares_issued | FLOAT  | REQUIRED  | Number of shares at the specified date.        | 2365421.0                       |

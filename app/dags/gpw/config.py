@@ -72,7 +72,7 @@ HISTORY_EQUITIES_SCHEMA = [
 HISTORY_INDICES_TABLE_ID = "indices"
 HISTORY_INDICES_SCHEMA = HISTORY_EQUITIES_SCHEMA
 
-DIM_EQUITIES_INFO_TABLE_ID = "dim_equities_info"
+DIM_EQUITIES_INFO_TABLE_ID = "equities_info"
 DIM_EQUITIES_INFO_SCHEMA = [
     {"name": "date", "type": "DATE", "mode": "REQUIRED", "description": "Date."},
     {
@@ -148,21 +148,9 @@ DIM_EQUITIES_INFO_SCHEMA = [
         "mode": "REQUIRED",
         "description": "Company's first listing.",
     },
-    {
-        "name": "market_value",
-        "type": "FLOAT64",
-        "mode": "REQUIRED",
-        "description": "Company's market value at the specified date.",
-    },
-    {
-        "name": "number_of_shares_issued",
-        "type": "FLOAT64",
-        "mode": "REQUIRED",
-        "description": "Number of shares at the specified date.",
-    },
 ]
 
-DIM_EQUITIES_INDICATORS_TABLE_ID = "dim_equities_indicators"
+DIM_EQUITIES_INDICATORS_TABLE_ID = "equities_indicators"
 DIM_EQUITIES_INDICATORS_SCHEMA = [
     {"name": "date", "type": "DATE", "mode": "REQUIRED", "description": "Date."},
     {
@@ -184,40 +172,194 @@ DIM_EQUITIES_INDICATORS_SCHEMA = [
         "description": "Sector to which the company belongs to.",
     },
     {
-        "name": "book_value",
-        "type": "FLOAT64",
-        "mode": "REQUIRED",
-        "description": "Company's book value at the specified date.",
-    },
-    {
         "name": "dividend_yield",
         "type": "FLOAT64",
         "mode": "NULLABLE",
         "description": "Last dividend.",
     },
     {
-        "name": "market_value",
-        "type": "FLOAT64",
-        "mode": "REQUIRED",
-        "description": "Company's market value at the specified date.",
-    },
-    {
-        "name": "number_of_shares_issued",
+        "name": "shares_issued",
         "type": "FLOAT64",
         "mode": "REQUIRED",
         "description": "Number of shares at the specified date.",
     },
+]
+
+DIM_EQUITIES_FINANCE_TABLE_ID = "equities_finance"
+DIM_EQUITIES_FINANCE_SCHEMA = [
     {
-        "name": "pbv",
-        "type": "FLOAT64",
-        "mode": "NULLABLE",
-        "description": "Price to book value ratio at the specified date.",
+        "name": "date",
+        "type": "DATE",
+        "mode": "REQUIRED",
+        "description": "Date when data was scraped.",
     },
     {
-        "name": "pe",
+        "name": "isin_code",
+        "type": "STRING",
+        "mode": "REQUIRED",
+        "description": "ISIN code for the equity.",
+    },
+    {
+        "name": "period",
+        "type": "STRING",
+        "mode": "REQUIRED",
+        "description": "Period of the data.",
+    },
+    {
+        "name": "revenues_from_sales",
         "type": "FLOAT64",
         "mode": "NULLABLE",
-        "description": "Price to earnings ratio at the specified date.",
+        "description": "Revenue from sales.",
+    },
+    {
+        "name": "profit_loss_on_sales",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Profit/loss on sales.",
+    },
+    {
+        "name": "operating_profit_loss",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Operating profit/loss.",
+    },
+    {
+        "name": "financial_income",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Financial income.",
+    },
+    {
+        "name": "profit_loss_before_tax",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Profit/loss before tax.",
+    },
+    {
+        "name": "net_profit_loss_attributable_to_equity_holders_of_parent",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Net profit/loss attributable to equity holders of the parent.",
+    },
+    {
+        "name": "depreciation",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Depreciation.",
+    },
+    {
+        "name": "equity_shareholders_of_parent",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Equity shareholders of the parent.",
+    },
+    {
+        "name": "assets",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Assets.",
+    },
+    {
+        "name": "non_current_assets",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Non current assets.",
+    },
+    {
+        "name": "current_assets",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Current assets.",
+    },
+    {
+        "name": "current_ratio",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Current ratio.",
+    },
+    {
+        "name": "quick_ratio",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Quick ratio.",
+    },
+    {
+        "name": "debt_service_ratio",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Debt service ratio.",
+    },
+    {
+        "name": "return_on_assets",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Return on assets.",
+    },
+    {
+        "name": "return_on_equity",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Return on equity.",
+    },
+    {
+        "name": "other_operating_revenues",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Other operating revenues.",
+    },
+    {
+        "name": "share_capital",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Share capital.",
+    },
+    {
+        "name": "non_current_liabilities",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Non current liabilities.",
+    },
+    {
+        "name": "current_liabilities",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Current liabilities.",
+    },
+    {
+        "name": "cash_flow_from_operating_activities",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Cash flow from operating activities.",
+    },
+    {
+        "name": "cash_flow_from_investing_activities",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Cash flow from investing activities.",
+    },
+    {
+        "name": "cash_flow_from_financing_activities",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Cash flow from financing activities.",
+    },
+    {
+        "name": "purchase_of_property_plant_equipment_and_intangible_assets",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Purchase of property, plant, equipment and intangible assets.",
+    },
+    {
+        "name": "net_cash_flow",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "Net cash flow.",
+    },
+    {
+        "name": "ebitda",
+        "type": "FLOAT64",
+        "mode": "NULLABLE",
+        "description": "EBITDA.",
     },
 ]
 
@@ -226,6 +368,7 @@ TABLES = {
     "indices": HISTORY_INDICES_TABLE_ID,
     "info": DIM_EQUITIES_INFO_TABLE_ID,
     "indicators": DIM_EQUITIES_INDICATORS_TABLE_ID,
+    "finance": DIM_EQUITIES_FINANCE_TABLE_ID,
 }
 
 SCHEMAS = {
@@ -233,4 +376,5 @@ SCHEMAS = {
     "indices": HISTORY_INDICES_SCHEMA,
     "info": DIM_EQUITIES_INFO_SCHEMA,
     "indicators": DIM_EQUITIES_INDICATORS_SCHEMA,
+    "finance": DIM_EQUITIES_FINANCE_SCHEMA,
 }

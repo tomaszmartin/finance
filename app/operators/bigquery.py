@@ -130,7 +130,9 @@ class UpsertGCSToBigQueryOperator(BaseOperator):
             result = [f"gs://{self.bucket_name}/{src}" for src in result]
             source_uris.extend(result)
 
-        logging.info("Found source uris: %s.", source_uris)
+        logging.info(
+            "Found %s source uris for prefix %s.", len(source_uris), self.source_prefix
+        )
         if not source_uris:
             raise ValueError("No source uris GCP objects found.")
         return source_uris

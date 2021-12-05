@@ -40,17 +40,14 @@ class DimensionToGCSOperator(BaseOperator):
         codes = [row["isin_code"] for row in rows]
         # For code
         for code in codes:
-            try:
-                # Download data
-                data = dimensions.get_data(isin_code=code, fact_type=self.fact_type)
-                # Upload to GCS
-                object_name = datalake.raw(**self.path_args, prefix=code)
-                object_name = self.render_template(object_name, context)
-                storage_hook.upload(
-                    bucket_name=self.bucket_name, object_name=object_name, data=data
-                )
-            except Exception:
-                logging.exception("Error with %s.", code)
+            # Download data
+            data = dimensions.get_data(isin_code=code, fact_type=self.fact_type)
+            # Upload to GCS
+            object_name = datalake.raw(**self.path_args, prefix=code)
+            object_name = self.render_template(object_name, context)
+            storage_hook.upload(
+                bucket_name=self.bucket_name, object_name=object_name, data=data
+            )
 
 
 class TransformDimensionOperator(BaseOperator):
@@ -63,7 +60,8 @@ class TransformDimensionOperator(BaseOperator):
         bucket_name: str,
         fact_type: str,
         from_xcom: str,
-        path_args: dict[str, str],
+        raw_args: dict[str, str],
+        master_args: dict[str, str],
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -71,7 +69,8 @@ class TransformDimensionOperator(BaseOperator):
         self.bucket_name = bucket_name
         self.fact_type = fact_type
         self.from_xcom = from_xcom
-        self.path_args = path_args
+        self.raw_args = raw_args
+        self.master_args = master_args
 
     def execute(self, context: Any):
         # Get GCS hook
@@ -80,24 +79,22 @@ class TransformDimensionOperator(BaseOperator):
         rows = context["ti"].xcom_pull(task_ids=self.from_xcom)
         codes = [row["isin_code"] for row in rows]
         for code in codes:
-            try:
-                # Download data
-                src_name = datalake.raw(**self.path_args, prefix=code)
-                src_name = self.render_template(src_name, context)
-                original_data = storage_hook.download(self.bucket_name, src_name)
-                # Transform
-                data = dimensions.parse_data(
-                    original_data,
-                    isin_code=code,
-                    fact_type=self.fact_type,
-                    execution_date=context["execution_date"],
-                )
-                # Upload to GCS
-                dst_name = datalake.master(**self.path_args, prefix=code)
-                dst_name = self.render_template(dst_name, context)
-                byte_data = to_bytes(dst_name, data)
-                storage_hook.upload(
-                    self.bucket_name, object_name=dst_name, data=byte_data
-                )
-            except Exception:
-                logging.exception("Error with %s.", code)
+            # Download data
+            src_name = datalake.raw(**self.raw_args, prefix=code)
+            src_name = self.render_template(src_name, context)
+            original_data = storage_hook.download(self.bucket_name, src_name)
+            # Transform
+            data = dimensions.parse_data(
+                original_data,
+                isin_code=code,
+                fact_type=self.fact_type,
+                execution_date=context["data_interval_start"],
+            )
+            if not data:
+                logging.warning("Empty data for %s.", code)
+                continue
+            # Upload to GCS
+            dst_name = datalake.master(**self.master_args, prefix=code)
+            dst_name = self.render_template(dst_name, context)
+            byte_data = to_bytes(dst_name, data)
+            storage_hook.upload(self.bucket_name, object_name=dst_name, data=byte_data)

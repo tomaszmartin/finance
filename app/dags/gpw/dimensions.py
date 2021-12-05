@@ -21,27 +21,27 @@ from app.dags.gpw import config
 with DAG(
     dag_id="gpw_dims",
     description="Scrapes information about equities on GPW.",
-    schedule_interval="@daily",
+    schedule_interval="@monthly",
     start_date=dt.datetime(2021, 11, 1),
 ) as dag:
     XCOM_KEY = "get_stocks_list"
-
-    check_holidays = ShortCircuitOperator(
-        task_id="check_if_holidays",
-        python_callable=lambda execution_date: not dates.is_holiday(execution_date),
-    )
     get_isin_codes = SelectFromBigQueryOperator(
         task_id=XCOM_KEY,
         gcp_conn_id=config.GCP_CONN_ID,
         sql="SELECT DISTINCT(isin_code) FROM "
         + f"`{config.DATASET_ID}.{config.HISTORY_EQUITIES_TABLE_ID}`"
-        + " WHERE date >= '{{ execution_date.subtract(days=3).date() }}'",
+        + " WHERE date >= '{{ execution_date.subtract(days=31).date() }}'",
     )
-    for fact_type in ["info", "indicators"]:
+    for fact_type in ["info", "indicators", "finance"]:
         TABLE_ID = config.TABLES[fact_type]
         SCHEMA = config.SCHEMAS[fact_type]
-        ARGS = {"process": "gpw", "dataset": f"dim_{fact_type}", "extension": "jsonl"}
-        PREFIX = f'master/{ARGS["process"]}/{ARGS["dataset"]}'
+        RAW_ARGS = {
+            "process": "gpw",
+            "dataset": f"dim_{fact_type}",
+            "extension": "html",
+        }
+        MASTER_ARGS = {**RAW_ARGS, **{"extension": "jsonl"}}
+        PREFIX = f'master/{RAW_ARGS["process"]}/{RAW_ARGS["dataset"]}'
 
         create_dataset = BigQueryCreateEmptyDatasetOperator(
             task_id=f"create_{fact_type}_dataset",
@@ -65,7 +65,8 @@ with DAG(
             bucket_name=config.BUCKET_NAME,
             fact_type=fact_type,
             from_xcom=XCOM_KEY,
-            path_args=ARGS,
+            path_args=RAW_ARGS,
+            execution_timeout=dt.timedelta(minutes=30),
         )
         transform_to_master = TransformDimensionOperator(
             task_id=f"transform_{fact_type}_to_master",
@@ -73,7 +74,9 @@ with DAG(
             bucket_name=config.BUCKET_NAME,
             fact_type=fact_type,
             from_xcom=XCOM_KEY,
-            path_args=ARGS,
+            raw_args=RAW_ARGS,
+            master_args=MASTER_ARGS,
+            execution_timeout=dt.timedelta(minutes=30),
         )
         upsert_data = UpsertGCSToBigQueryOperator(
             task_id=f"upsert_to_{TABLE_ID}",
@@ -94,13 +97,5 @@ with DAG(
         )
 
         # pylint: disable=pointless-statement
-        (
-            check_holidays
-            >> get_isin_codes
-            >> create_dataset
-            >> create_table
-            >> download_raw
-            >> transform_to_master
-            >> upsert_data
-            >> verify
-        )
+        (create_dataset >> create_table >> upsert_data)
+        (get_isin_codes >> download_raw >> transform_to_master >> upsert_data >> verify)

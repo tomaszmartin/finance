@@ -41,6 +41,11 @@ def company_info() -> Tuple[bytes, str, dt.datetime]:
 
 
 @fixture
+def company_finance() -> Tuple[bytes, str, dt.datetime]:
+    return _get_data("company_finance.html"), "LU2237380790", dt.datetime(2021, 7, 4)
+
+
+@fixture
 def company_indicators() -> Tuple[bytes, str, dt.datetime]:
     return _get_data("company_indicators.html"), "PLGPW0000017", dt.datetime(2021, 7, 4)
 
