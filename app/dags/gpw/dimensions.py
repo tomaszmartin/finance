@@ -23,6 +23,7 @@ with DAG(
     description="Scrapes information about equities on GPW.",
     schedule_interval="@monthly",
     start_date=dt.datetime(2021, 11, 1),
+    catchup=False,
 ) as dag:
     XCOM_KEY = "get_stocks_list"
     get_isin_codes = SelectFromBigQueryOperator(

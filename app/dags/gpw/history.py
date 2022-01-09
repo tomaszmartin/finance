@@ -25,7 +25,7 @@ with DAG(
     description="Scrapes historical prices of equities and indices on GPW.",
     schedule_interval="@daily",
     start_date=dt.datetime(2021, 11, 1),
-    catchup=True,
+    catchup=False,
 ) as dag:
     check_holidays = ShortCircuitOperator(
         task_id="check_if_workday",

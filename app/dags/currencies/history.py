@@ -20,6 +20,7 @@ with DAG(
     description="Scrapes historical prices of currencies.",
     schedule_interval="@daily",
     start_date=dt.datetime(2021, 11, 1),
+    catchup=False,
 ) as dag:
     ARGS = {"process": "currencies", "dataset": "historical"}
     RAW_FILE = datalake.raw(**ARGS, extension="json")

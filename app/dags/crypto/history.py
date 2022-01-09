@@ -18,6 +18,7 @@ with DAG(
     description="Scrapes historical prices of some popular cryptocurrencies.",
     schedule_interval="@daily",
     start_date=dt.datetime(2021, 11, 1),
+    catchup=False,
 ) as dag:
     create_dataset = BigQueryCreateEmptyDatasetOperator(
         task_id="create_dataset",

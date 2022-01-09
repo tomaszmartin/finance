@@ -13,6 +13,7 @@ with DAG(
     description="Verifies the quality of GPW data.",
     schedule_interval="@daily",
     start_date=dt.datetime(2021, 11, 1),
+    catchup=False,
 ) as dag:
     for instrument in ["equities", "indices"]:
         TABLE = config.TABLES[instrument]
