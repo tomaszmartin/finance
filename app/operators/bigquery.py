@@ -1,12 +1,15 @@
 """Contains Operators for working with Google BigQuery."""
+from os import stat
+import uuid
 from typing import Any, Dict, Optional
 import logging
 
 from airflow.models.baseoperator import BaseOperator
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
+from sqlalchemy.sql.expression import table
 
-from app.tools.sql import replace_from_temp
+from app.tools import sql
 
 
 class SelectFromBigQueryOperator(BaseOperator):
@@ -70,46 +73,51 @@ class UpsertGCSToBigQueryOperator(BaseOperator):
 
     def execute(self, context: Any):
         bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
-        temp_table_id = self.temp_table_id
-        table_id = self.table_id
-        if not temp_table_id:
-            temp_table_id = f"{table_id}_tmp"
-        source_uris = self.get_source_uris(context["ds_nodash"])
-        # Create external table
-        exists = bq_hook.table_exists(
-            dataset_id=self.dataset_id, table_id=temp_table_id
+        temp_table_id = self.temp_table_id or f"{self.table_id}_{uuid.uuid4()}"
+        try:
+            self.create_external_table(context, bq_hook, temp_table_id)
+            self.replace_data(
+                bq_hook, src_table=temp_table_id, dest_table=self.table_id
+            )
+        finally:
+            self.drop_external_table(bq_hook, temp_table_id)
+
+    def replace_data(self, bq_hook: BigQueryHook, src_table: str, dest_table: str):
+        replace_query = sql.replace_in_transaction(
+            dataset_id=self.dataset_id,
+            src_table=src_table,
+            dest_table=dest_table,
+            delete_using=self.delete_using,
         )
+        bq_hook.insert_job(configuration=self._query_config(replace_query))
+
+    def create_external_table(
+        self,
+        context: Any,
+        bq_hook: BigQueryHook,
+        table_id: str,
+    ) -> None:
+        exists = bq_hook.table_exists(dataset_id=self.dataset_id, table_id=table_id)
         if exists:
-            msg = f"Can't create temp table: {temp_table_id} already exists."
+            msg = f"Can't create temp table: `{table_id}` already exists."
             raise ValueError(msg)
+        source_uris = self.get_source_uris(context["ds_nodash"])
         bq_hook.create_external_table(
-            external_project_dataset_table=f"{self.dataset_id}.{temp_table_id}",
+            external_project_dataset_table=f"{self.dataset_id}.{table_id}",
             source_format=self.source_format,
             schema_fields=self.schema_fields,
             source_uris=source_uris,
         )
-        logging.info("External table from %s.", source_uris)
-        # Replace data from external table
-        replace_query = replace_from_temp(
-            dataset_id=self.dataset_id,
-            dest_table=self.table_id,
-            temp_table=temp_table_id,
-            delete_using=self.delete_using,
-        )
-        try:
-            bq_hook.insert_job(
-                configuration={"query": {"query": replace_query, "useLegacySql": False}}
-            )
-        finally:
-            # Drop external table
-            bq_hook.insert_job(
-                configuration={
-                    "query": {
-                        "query": f"DROP TABLE {self.dataset_id}.{temp_table_id}",
-                        "useLegacySql": False,
-                    }
-                }
-            )
+
+    def drop_external_table(self, bq_hook: BigQueryHook, table_id: str) -> None:
+        """Drops the specified table.
+
+        Args:
+            bq_hook: BigQuery hook that executes queries.
+            table_id: ID of the table that should be dropped.
+        """
+        drop_query = f"DROP TABLE `{self.dataset_id}.{table_id}`"
+        bq_hook.insert_job(configuration=self._query_config(drop_query))
 
     def get_source_uris(self, ds_nodash: str) -> list[str]:
         """Returns source URIs. URIs can be created:
@@ -136,6 +144,10 @@ class UpsertGCSToBigQueryOperator(BaseOperator):
         if not source_uris:
             raise ValueError("No source uris GCP objects found.")
         return source_uris
+
+    @staticmethod
+    def _query_config(query: str):
+        return {"query": {"query": query, "useLegacySql": False}}
 
 
 class BigQueryValidateDataOperator(BaseOperator):

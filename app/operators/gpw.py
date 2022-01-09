@@ -1,9 +1,12 @@
 """Contains Operators for working with GPW dimension data."""
 import logging
+from multiprocessing import Value
 from typing import Any
 
 from airflow.models.baseoperator import BaseOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
+from requests.exceptions import HTTPError
+from google.api_core.exceptions import NotFound
 
 from app.scrapers.stocks import dimensions
 from app.tools import datalake
@@ -38,16 +41,23 @@ class DimensionToGCSOperator(BaseOperator):
         # Get isin_codes
         rows = context["ti"].xcom_pull(task_ids=self.from_xcom)
         codes = [row["isin_code"] for row in rows]
+        errors = 0
         # For code
         for code in codes:
-            # Download data
-            data = dimensions.get_data(isin_code=code, fact_type=self.fact_type)
-            # Upload to GCS
-            object_name = datalake.raw(**self.path_args, prefix=code)
-            object_name = self.render_template(object_name, context)
-            storage_hook.upload(
-                bucket_name=self.bucket_name, object_name=object_name, data=data
-            )
+            try:
+                # Download data
+                data = dimensions.get_data(isin_code=code, fact_type=self.fact_type)
+                # Upload to GCS
+                object_name = datalake.raw(**self.path_args, prefix=code)
+                object_name = self.render_template(object_name, context)
+                storage_hook.upload(
+                    bucket_name=self.bucket_name, object_name=object_name, data=data
+                )
+            except HTTPError:
+                logging.warning("Error downloading data for %s.", code)
+                errors += 1
+        if (errors / len(codes)) > 0.01:
+            raise ValueError("Too many errors while downloading dimensions.")
 
 
 class TransformDimensionOperator(BaseOperator):
@@ -78,23 +88,32 @@ class TransformDimensionOperator(BaseOperator):
         # Get isin_codes
         rows = context["ti"].xcom_pull(task_ids=self.from_xcom)
         codes = [row["isin_code"] for row in rows]
+        errors = 0
         for code in codes:
-            # Download data
-            src_name = datalake.raw(**self.raw_args, prefix=code)
-            src_name = self.render_template(src_name, context)
-            original_data = storage_hook.download(self.bucket_name, src_name)
-            # Transform
-            data = dimensions.parse_data(
-                original_data,
-                isin_code=code,
-                fact_type=self.fact_type,
-                execution_date=context["data_interval_start"],
-            )
-            if not data:
-                logging.warning("Empty data for %s.", code)
-                continue
-            # Upload to GCS
-            dst_name = datalake.master(**self.master_args, prefix=code)
-            dst_name = self.render_template(dst_name, context)
-            byte_data = to_bytes(dst_name, data)
-            storage_hook.upload(self.bucket_name, object_name=dst_name, data=byte_data)
+            try:
+                # Download data
+                src_name = datalake.raw(**self.raw_args, prefix=code)
+                src_name = self.render_template(src_name, context)
+                original_data = storage_hook.download(self.bucket_name, src_name)
+                # Transform
+                data = dimensions.parse_data(
+                    original_data,
+                    isin_code=code,
+                    fact_type=self.fact_type,
+                    execution_date=context["data_interval_start"],
+                )
+                if not data:
+                    logging.warning("Empty data for %s.", code)
+                    continue
+                # Upload to GCS
+                dst_name = datalake.master(**self.master_args, prefix=code)
+                dst_name = self.render_template(dst_name, context)
+                byte_data = to_bytes(dst_name, data)
+                storage_hook.upload(
+                    self.bucket_name, object_name=dst_name, data=byte_data
+                )
+            except NotFound:
+                logging.warning("Error downloading data for %s.", code)
+                errors += 1
+        if (errors / len(codes)) > 0.01:
+            raise ValueError("Too many errors while downloading dimensions.")

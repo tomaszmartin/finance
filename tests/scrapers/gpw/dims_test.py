@@ -1,3 +1,4 @@
+import datetime as dt
 from unittest import mock
 
 import pytest
@@ -45,32 +46,39 @@ def test_parsing_company_indicators(company_indicators):
 def test_parsing_company_finance(company_finance):
     data, isin_code, execution_date = company_finance
     parsed = dimensions.parse_data(data, isin_code, "finance", execution_date)
+    print(parsed)
     assert parsed == [
         {
-            "revenues_from_sales": 3752193.0,
-            "profit_loss_on_sales": 1350070.0,
-            "operating_profit_loss": 1151135.0,
-            "financial_income": 118886.0,
-            "profit_loss_before_tax": 1106552.0,
-            "net_profit_loss_attributable_to_equity_holders_of_parent": 889882.0,
-            "depreciation": 380978.0,
             "assets": 16217065.0,
-            "non_current_assets": 13358819.0,
-            "current_assets": 2858246.0,
-            "equity_shareholders_of_parent": 9116807.0,
-            "share_capital": 10233.0,
-            "non_current_liabilities": 6137261.0,
-            "current_liabilities": 962997.0,
-            "cash_flow_from_operating_activities": 1033300.0,
-            "cash_flow_from_investing_activities": -256939.0,
-            "purchase_of_property_plant_equipment_and_intangible_assets": -256659.0,
             "cash_flow_from_financing_activities": -172911.0,
-            "net_cash_flow": 603450.0,
+            "cash_flow_from_investing_activities": -256939.0,
+            "cash_flow_from_operating_activities": 1033300.0,
+            "current_assets": 2858246.0,
+            "current_liabilities": 962997.0,
+            "current_ratio": None,
+            "date": dt.date(2021, 7, 4),
+            "debt_service_ratio": None,
+            "depreciation": 380978.0,
             "ebitda": 1532113.0,
-            "period": "q1-q3 2021",
+            "equity_shareholders_of_parent": 9116807.0,
+            "financial_income": 118886.0,
             "isin_code": "LU2237380790",
-            "date": execution_date.date(),
-        }
+            "net_cash_flow": 603450.0,
+            "net_profit_loss_attributable_to_equity_holders_of_parent": 889882.0,
+            "non_current_assets": 13358819.0,
+            "non_current_liabilities": 6137261.0,
+            "operating_profit_loss": 1151135.0,
+            "other_operating_revenues": None,
+            "period": "q1-q3 2021",
+            "profit_loss_before_tax": 1106552.0,
+            "profit_loss_on_sales": 1350070.0,
+            "purchase_of_property_plant_equipment_and_intangible_assets": -256659.0,
+            "quick_ratio": None,
+            "return_on_assets": None,
+            "return_on_equity": None,
+            "revenues_from_sales": 3752193.0,
+            "share_capital": 10233.0,
+        },
     ]
 
 
@@ -79,7 +87,7 @@ def test_downloading_info(mock_get):
     dimensions.get_data("ISIN_CODE", "info")
     mock_get.assert_called_with(
         "https://www.gpw.pl/ajaxindex.php"
-        "?start=infoTab&format=html&action=GPWListaSp&gls_isin=ISIN_CODE&lang=EN"
+        "?start=infoTab&format=html&action=GPWListaSp&gls_isin=ISIN_CODE&isin=ISIN_CODE&lang=EN"
     )
 
 
@@ -88,7 +96,7 @@ def test_downloading_indicators(mock_get):
     dimensions.get_data("ISIN_CODE", "indicators")
     mock_get.assert_called_with(
         "https://www.gpw.pl/ajaxindex.php"
-        "?start=indicatorsTab&format=html&action=GPWListaSp&gls_isin=ISIN_CODE&lang=EN"
+        "?start=indicatorsTab&format=html&action=GPWListaSp&gls_isin=ISIN_CODE&isin=ISIN_CODE&lang=EN"
     )
 
 
