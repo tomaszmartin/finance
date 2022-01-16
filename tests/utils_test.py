@@ -1,4 +1,13 @@
+import re
+
+from hypothesis import given, strategies as sn
 from app import utils
+
+
+@given(chars=sn.characters())
+def test_no_whitespace_in_snake(chars):
+    result = utils.to_snake(chars)
+    assert not re.search(r"^\s|\s$", result)
 
 
 def test_snake_case_converision():

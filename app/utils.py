@@ -17,9 +17,9 @@ def to_snake(original: str) -> str:
         snake_case version of the string
     """
     res = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", original)
-    res = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", res).lower()
+    res = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", res)
     res = re.sub(r"\s", "_", res)
-    return res
+    return res.lower()
 
 
 def to_float(

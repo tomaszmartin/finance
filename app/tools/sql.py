@@ -38,7 +38,7 @@ def distinct(
             THEN true
             ELSE false
         END AS cmp
-        FROM {table_id}
+        FROM `{table_id}`
     """
     if where:
         qry += f" WHERE {where}"

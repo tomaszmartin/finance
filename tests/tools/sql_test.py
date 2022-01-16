@@ -1,3 +1,4 @@
+from hypothesis import given, settings, HealthCheck, strategies as sn
 import pytest
 import sqlite3
 from app.tools import sql
@@ -12,15 +13,19 @@ def db_session():
 
 
 def insert(db_sess, table: str, values: tuple):
-    db_sess.execute(f"INSERT INTO {table} VALUES{values}")
+    db_sess.execute(f"INSERT INTO `{table}` VALUES{values}")
 
 
-def test_sql_not_distinct(db_session):
-    db_session.execute("CREATE TABLE test (key text, value int)")
-    insert(db_session, "test", ("key1", 10))
-    insert(db_session, "test", ("key1", 20))
-    cur = db_session.execute(sql.distinct("key", "test"))
+@given(chars=sn.from_regex(r"[AZaz09]+", fullmatch=True))
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_sql_not_distinct(chars, db_session):
+    query = sql.distinct("key", "test")
+    db_session.execute("CREATE TABLE `test` (key text, value int);")
+    insert(db_session, "test", (chars, 10))
+    insert(db_session, "test", (chars, 20))
+    cur = db_session.execute(query)
     assert not cur.fetchone()[0]
+    db_session.execute("DROP TABLE 'test';")
 
 
 def test_sql_distinct(db_session):
