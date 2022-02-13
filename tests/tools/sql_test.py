@@ -1,15 +1,5 @@
 from hypothesis import given, settings, HealthCheck, strategies as sn
-import pytest
-import sqlite3
 from app.tools import sql
-
-
-@pytest.fixture
-def db_session():
-    connection = sqlite3.connect(":memory:")
-    db_session = connection.cursor()
-    yield db_session
-    connection.close()
 
 
 def insert(db_sess, table: str, values: tuple):

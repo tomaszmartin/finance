@@ -79,3 +79,10 @@ def db_conn():
     connection = engine.connect()
     yield connection
     connection.close()
+
+
+@fixture
+def db_session(db_conn):
+    db_session = db_conn.connect()
+    yield db_session
+    db_conn.close()

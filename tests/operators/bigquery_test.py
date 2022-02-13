@@ -29,13 +29,15 @@ def test_verifying_ok():
 
 
 @pytest.fixture
-def mocked_bq_call(request, db_conn):
+def mocked_bq_call(request, db_session):
     with mock.patch(
         "app.operators.bigquery.BigQueryValidateDataOperator.get_data_from_bq"
     ) as mocked_get_call:
-        db_conn.execute("CREATE TABLE test (col BOOL);")
-        db_conn.execute("INSERT INTO test (col) VALUES (:col)", {"col": request.param})
-        mocked_get_call.side_effect = partial(pd.read_sql, con=db_conn)
+        db_session.execute("CREATE TABLE test (col BOOL);")
+        db_session.execute(
+            "INSERT INTO test (col) VALUES (:col)", {"col": request.param}
+        )
+        mocked_get_call.side_effect = partial(pd.read_sql, con=db_session)
         yield mocked_get_call
 
 
