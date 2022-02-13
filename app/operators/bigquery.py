@@ -1,5 +1,4 @@
 """Contains Operators for working with Google BigQuery."""
-from os import stat
 import uuid
 from typing import Any, Dict, Optional
 import logging
@@ -7,7 +6,7 @@ import logging
 from airflow.models.baseoperator import BaseOperator
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
-from sqlalchemy.sql.expression import table
+import pandas as pd
 
 from app.tools import sql
 
@@ -181,12 +180,16 @@ class BigQueryValidateDataOperator(BaseOperator):
         self.sql = sql
 
     def execute(self, context: Any) -> None:
-        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
-        results = bq_hook.get_pandas_df(sql=self.sql)
+        results = self.get_data_from_bq(self.sql)
         data = results.to_dict("records")
         for row in data:
             if not self.verify(row):
                 raise AssertionError(f"Condition not met for {row}.")
+
+    def get_data_from_bq(self, sql: str) -> pd.DataFrame:
+        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
+        results = bq_hook.get_pandas_df(sql)
+        return results
 
     @staticmethod
     def verify(row: Dict[str, Any]) -> bool:

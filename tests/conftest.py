@@ -1,7 +1,9 @@
 import datetime as dt
+from sqlite3 import connect
 from typing import Tuple
 from unittest import mock
 
+import sqlalchemy
 from pytest import fixture
 
 
@@ -69,3 +71,11 @@ def currencies_data() -> Tuple[bytes, dt.datetime]:
 def mock_coinapi_hook():
     with mock.patch("app.scrapers.coinapi.HttpHook", autospec=True) as mock_hook:
         yield mock_hook.return_value
+
+
+@fixture
+def db_conn():
+    engine = sqlalchemy.create_engine("sqlite://")
+    connection = engine.connect()
+    yield connection
+    connection.close()
