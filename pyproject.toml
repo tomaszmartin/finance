@@ -1,6 +1,28 @@
+[tool.isort]
+profile = "black"
+
 [tool.pytest.ini_options]
-addopts = "tests --cov=app --cov-report=term-missing"
-testpaths = ["tests"]
+addopts = "--doctest-modules --cov=app --cov-report=term-missing"
 
 [tool.mypy]
+python_version = 3.9
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
 ignore_missing_imports = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+no_site_packages = true
+
+[tool.pylint.master]
+load-plugins = [
+    "pylint.extensions.docparams",
+    "pylint.extensions.docstyle",
+]
+
+[tool.pylint.similarities]
+ignore-comments = "yes"
+ignore-docstrings = "yes"
+ignore-imports = "yes"
+min-similarity-lines = 10
