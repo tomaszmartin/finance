@@ -1,13 +1,14 @@
 """Helper functions for scraping and parsing data for GPW Polish Stock Exchange."""
 import datetime as dt
-from typing import Any, Dict, List
 import urllib.parse as urlparse
+from typing import Any, Dict, List
 from urllib.parse import parse_qs
 
 import requests
 from bs4 import BeautifulSoup
 
 from app import utils
+from app.scrapers import base
 
 
 def get_archive(instrument: str, execution_date: dt.date) -> bytes:
@@ -18,7 +19,10 @@ def get_archive(instrument: str, execution_date: dt.date) -> bytes:
         execution_date (dt.date): what day
 
     Returns:
-        website contents
+        Website content.
+
+    Raise:
+        ValueError when extracted data in wrong format.
     """
     type_map = {"equities": "10", "indices": "1"}
     params = {
@@ -27,11 +31,11 @@ def get_archive(instrument: str, execution_date: dt.date) -> bytes:
         "date": execution_date.strftime("%d-%m-%Y"),
     }
     url = "https://www.gpw.pl/price-archive-full"
-    resp = requests.get(url, params=params)
-    resp.raise_for_status()
-    return resp.content
+    response = requests.get(url, params=params)
+    return base.extract_content(response)
 
 
+# pylint: disable=unused-argument
 def get_realtime(instrument: str, execution_date: dt.date) -> bytes:
     """Extracts current data by extracting html of the page.
 
@@ -52,22 +56,21 @@ def get_realtime(instrument: str, execution_date: dt.date) -> bytes:
             "&start=showTable&tab=all&lang=EN&format=html"
         ),
     }
-    resp = requests.get(type_map[instrument])
-    resp.raise_for_status()
-    return resp.content
+    response = requests.get(type_map[instrument])
+    return base.extract_content(response)
 
 
-def parse_archive(stocks_data: bytes, datetime: dt.datetime) -> list[dict[str, Any]]:
+def parse_archive(raw_data: bytes, execution_date: dt.datetime) -> list[dict[str, Any]]:
     """Parses archive html data.
 
     Args:
-        stocks_data: website html
-        datetime: what day
+        raw_data: Website data in html.
+        execution_date: For what date data is parsed.
 
     Returns:
-        parsed data
+        Parsed data.
     """
-    soup = BeautifulSoup(stocks_data, "lxml")
+    soup = BeautifulSoup(raw_data, "lxml")
     column_names = get_column_names(soup)
     main = soup.select(".table.footable")[0]
     rows = main.select("tr")
@@ -75,29 +78,30 @@ def parse_archive(stocks_data: bytes, datetime: dt.datetime) -> list[dict[str, A
     records = [parse_row(row, column_names) for row in rows]
     records = [rec for rec in records if rec]
     for record in records:
-        record["date"] = datetime.date()
+        record["date"] = execution_date.date()
     return records
 
 
-def parse_realtime(stocks_data: bytes, datetime: dt.datetime):
+def parse_realtime(
+    raw_data: bytes, execution_date: dt.datetime
+) -> list[dict[str, Any]]:
     """Parses current html data.
 
-    Args:
-        stocks_data: website html
-        datetime: what day
+    raw_data: Website data in html.
+        execution_date: For what date data is parsed.
 
     Returns:
-        parsed data
+        Parsed data.
     """
-    soup = BeautifulSoup(stocks_data, "lxml")
+    soup = BeautifulSoup(raw_data, "lxml")
     main = soup.select(".table")[-1]
     column_names = get_column_names(main)[:12]
     rows = main.select("tr:not(.footable-group-row):not(.summary)")[1:]
-    records: List[Dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
     records = [parse_realtime_row(row, column_names) for row in rows]
     records = [rec for rec in records if rec]
     for record in records:
-        record["timestamp"] = datetime.timestamp()
+        record["timestamp"] = execution_date.timestamp()
     return records
 
 

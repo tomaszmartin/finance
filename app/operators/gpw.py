@@ -1,12 +1,11 @@
 """Contains Operators for working with GPW dimension data."""
 import logging
-from multiprocessing import Value
 from typing import Any
 
 from airflow.models.baseoperator import BaseOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
-from requests.exceptions import HTTPError
 from google.api_core.exceptions import NotFound
+from requests.exceptions import HTTPError
 
 from app.scrapers.stocks import dimensions
 from app.tools import datalake
@@ -21,6 +20,7 @@ class DimensionToGCSOperator(BaseOperator):
 
     def __init__(
         self,
+        *,
         gcp_conn_id: str,
         bucket_name: str,
         fact_type: str,
@@ -35,7 +35,7 @@ class DimensionToGCSOperator(BaseOperator):
         self.from_xcom = from_xcom
         self.path_args = path_args
 
-    def execute(self, context: Any):
+    def execute(self, context: Any) -> None:
         # Get GCS hook
         storage_hook = GCSHook(google_cloud_storage_conn_id=self.gcp_conn_id)
         # Get isin_codes
@@ -56,24 +56,24 @@ class DimensionToGCSOperator(BaseOperator):
             except HTTPError:
                 logging.warning("Error downloading data for %s.", code)
                 errors += 1
-        if (errors / len(codes)) > 0.01:
-            raise ValueError("Too many errors while downloading dimensions.")
+        _check_error_rate(errors, len(codes))
 
 
 class TransformDimensionOperator(BaseOperator):
-    """Transforms dimenions data stored on GCS from raw
+    """Transforms dimensions data stored on GCS from raw
     'html' format into json newline files."""
 
     def __init__(
         self,
+        *,
         gcp_conn_id: str,
         bucket_name: str,
         fact_type: str,
         from_xcom: str,
         raw_args: dict[str, str],
         master_args: dict[str, str],
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         self.gcp_conn_id = gcp_conn_id
         self.bucket_name = bucket_name
@@ -82,7 +82,7 @@ class TransformDimensionOperator(BaseOperator):
         self.raw_args = raw_args
         self.master_args = master_args
 
-    def execute(self, context: Any):
+    def execute(self, context: Any) -> None:
         # Get GCS hook
         storage_hook = GCSHook(google_cloud_storage_conn_id=self.gcp_conn_id)
         # Get isin_codes
@@ -115,5 +115,10 @@ class TransformDimensionOperator(BaseOperator):
             except NotFound:
                 logging.warning("Error downloading data for %s.", code)
                 errors += 1
-        if (errors / len(codes)) > 0.01:
-            raise ValueError("Too many errors while downloading dimensions.")
+        _check_error_rate(errors, len(codes))
+
+
+def _check_error_rate(errors: int, total: int) -> None:
+    if (errors / total) < 0.05:
+        return
+    raise ValueError("Too many errors for dimensions.")

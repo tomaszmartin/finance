@@ -8,12 +8,11 @@ from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCreateEmptyTableOperator,
 )
 
-from app.operators.storage import FilesToStorageOperator, TransformStorageFilesOperator
+from app.dags.currencies import config
 from app.operators.bigquery import UpsertGCSToBigQueryOperator
+from app.operators.storage import FileToGCSOperator, TransformGCSFileOperator
 from app.scrapers import currencies
 from app.tools import datalake
-from app.dags.currencies import config
-
 
 with DAG(
     dag_id="currencies_history",
@@ -42,17 +41,20 @@ with DAG(
         cluster_fields=["currency"],
         exists_ok=True,
     )
-    download_raw = FilesToStorageOperator(
+    download_raw = FileToGCSOperator(
         task_id="download_data",
-        files=[(RAW_FILE, currencies.download_data)],
         gcp_conn_id=config.GCP_CONN_ID,
         bucket_name=config.BUCKET_NAME,
+        object_name=RAW_FILE,
+        object_provider=currencies.download_data,
     )
-    transform_to_master = TransformStorageFilesOperator(
+    transform_to_master = TransformGCSFileOperator(
         task_id="transform_data",
         gcp_conn_id=config.GCP_CONN_ID,
         bucket_name=config.BUCKET_NAME,
-        handlers=[(RAW_FILE, MASTER_FILE, currencies.parse_data)],
+        source_object=RAW_FILE,
+        destination_object=MASTER_FILE,
+        transformation=currencies.parse_data,
     )
     upsert_data = UpsertGCSToBigQueryOperator(
         task_id=f"upsert_to_{config.HISTORY_TABLE_ID}",

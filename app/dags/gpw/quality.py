@@ -3,10 +3,9 @@ import datetime as dt
 
 from airflow import DAG
 
-from app.operators.bigquery import BigQueryValidateDataOperator
 from app.dags.gpw import config
+from app.operators.bigquery import BigQueryValidateDataOperator
 from app.tools import sql
-
 
 with DAG(
     dag_id="gpw_quality",
@@ -23,7 +22,7 @@ with DAG(
         check_distinct = BigQueryValidateDataOperator(
             task_id=f"check_distinct_{TABLE_ID}",
             gcp_conn_id=config.GCP_CONN_ID,
-            sql=sql.distinct(
+            query=sql.distinct(
                 column="isin_code",
                 table_id=TABLE_ID,
                 where="date >= '{{ execution_date.subtract(days=30).date() }}'",
@@ -34,5 +33,5 @@ with DAG(
         check_count = BigQueryValidateDataOperator(
             task_id=f"check_count_{TABLE_ID}",
             gcp_conn_id=config.GCP_CONN_ID,
-            sql=sql.count_in_time("isin_code", TABLE_ID),
+            query=sql.count_in_time("isin_code", TABLE_ID),
         )

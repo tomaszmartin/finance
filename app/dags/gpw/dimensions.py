@@ -2,21 +2,18 @@
 import datetime as dt
 
 from airflow import DAG
-from airflow.operators.python import ShortCircuitOperator
 from airflow.providers.google.cloud.operators.bigquery import (
     BigQueryCheckOperator,
     BigQueryCreateEmptyDatasetOperator,
     BigQueryCreateEmptyTableOperator,
 )
 
+from app.dags.gpw import config
 from app.operators.bigquery import (
     SelectFromBigQueryOperator,
     UpsertGCSToBigQueryOperator,
 )
-from app.tools import dates
 from app.operators.gpw import DimensionToGCSOperator, TransformDimensionOperator
-from app.dags.gpw import config
-
 
 with DAG(
     dag_id="gpw_dims",

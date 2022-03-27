@@ -1,7 +1,8 @@
+from cgitb import reset
 import json
+import os
 from functools import partial
 from typing import Any
-import os
 
 
 def to_bytes(filename: str, data: list[dict[str, Any]]) -> bytes:
@@ -14,7 +15,8 @@ def to_bytes(filename: str, data: list[dict[str, Any]]) -> bytes:
         data: data to be converted.
 
     Raises:
-        ValueError: when the file format is not handled
+        ValueError: when the file format is not handled or
+         result is not bytes.
 
     Returns:
         data converted to bytes in proper format.
@@ -23,11 +25,14 @@ def to_bytes(filename: str, data: list[dict[str, Any]]) -> bytes:
     generators = {"json": _json_bytes, "jsonl": _jsonl_bytes}
     if ext not in generators.keys():
         raise ValueError(f"Unhandled extension '{ext}'.")
-    return generators[ext](data)
+    result = generators[ext](data)
+    if isinstance(result, bytes):
+        return result
+    raise ValueError(f"Error converting {ext}.")
 
 
 def from_bytes(filename: str, data: bytes) -> list[dict[str, Any]]:
-    """Converts bytes to a list of dictonaries according
+    """Converts bytes to a list of dictionaries according
     to the format in file name.
 
     Args:
@@ -45,7 +50,10 @@ def from_bytes(filename: str, data: bytes) -> list[dict[str, Any]]:
     handlers: dict[str, Any] = {"json": json.loads, "jsonl": _from_jsonl}
     if ext not in handlers.keys():
         raise ValueError(f"Unhandled extension '{ext}'.")
-    return handlers[ext](data)
+    result = handlers[ext](data)
+    if isinstance(result, list):
+        return result
+    raise ValueError(f"Error parsing {ext}.")
 
 
 def get_extension(filename: str) -> str:
@@ -70,7 +78,7 @@ def _json_bytes(data: list[dict[str, Any]]) -> bytes:
     return json.dumps(data, sort_keys=True, default=str).encode("utf-8")
 
 
-def _from_jsonl(data: bytes):
+def _from_jsonl(data: bytes) -> list[dict[str, Any]]:
     encoded = data.decode("utf8")
     result = []
     for line in encoded.splitlines():

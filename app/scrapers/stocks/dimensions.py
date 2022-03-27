@@ -1,12 +1,12 @@
 """Helper functions for scraping and parsing data for GPW Polish Stock Exchange."""
 import datetime as dt
-import logging
 from typing import Any, Optional
 
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
 
 from app import utils
+from app.scrapers import base
 
 
 def get_data(isin_code: str, fact_type: str) -> bytes:
@@ -14,9 +14,13 @@ def get_data(isin_code: str, fact_type: str) -> bytes:
 
     Args:
         isin_code: company isin code
+        fact_type: what type of fact to download
 
     Returns:
         data about the company
+
+    Raises:
+        ValueError: When unknown fact type is used.
     """
     tabs = {
         "info": "infoTab",
@@ -30,8 +34,7 @@ def get_data(isin_code: str, fact_type: str) -> bytes:
         f"&format=html&action=GPWListaSp&gls_isin={isin_code}&isin={isin_code}&lang=EN"
     )
     response = requests.get(endpoint)
-    response.raise_for_status()
-    return response.content
+    return base.extract_content(response)
 
 
 def parse_data(
@@ -119,7 +122,9 @@ def _clean_finance_data(data: dict[str, Any]) -> dict[str, Any]:
         "operating_profit/loss": "operating_profit_loss",
         "financial_income": "financial_income",
         "profit/loss_before_tax": "profit_loss_before_tax",
-        "net_profit/loss_attributable_to_equity_holders_of_the_parent": "net_profit_loss_attributable_to_equity_holders_of_parent",
+        "net_profit/loss_attributable_to_equity_holders_of_the_parent": (
+            "net_profit_loss_attributable_to_equity_holders_of_parent"
+        ),
         "depreciation": "depreciation",
         "assets": "assets",
         "non-current_assets": "non_current_assets",
@@ -130,7 +135,9 @@ def _clean_finance_data(data: dict[str, Any]) -> dict[str, Any]:
         "current_liabilities": "current_liabilities",
         "cash_flow_from_operating_activities": "cash_flow_from_operating_activities",
         "cash_flow_from_investing_activities": "cash_flow_from_investing_activities",
-        "purchase_of_property,_plant,_equipment_and_intangible_assets": "purchase_of_property_plant_equipment_and_intangible_assets",
+        "purchase_of_property,_plant,_equipment_and_intangible_assets": (
+            "purchase_of_property_plant_equipment_and_intangible_assets"
+        ),
         "cash_flow_from_financing_activities": "cash_flow_from_financing_activities",
         "net_cash_flow": "net_cash_flow",
         "ebitda": "ebitda",

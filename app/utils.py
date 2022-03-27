@@ -1,20 +1,21 @@
-"""Contains common helper functions, used my multiple modules.
-"""
+"""This module contains common helper functions."""
+import copy
 import re
 from typing import Any, Optional
 
 
 def to_snake(original: str) -> str:
-    """Changes string to it's snake_case version.
+    """Changes string to it's 'snake_case' version.
 
     Example:
-        to_snake("This that") == "this_that"
+        >>> to_snake("This that")
+        'this_that'
 
     Args:
-        original: original string value.
+        original: Original string value.
 
     Returns:
-        snake_case version of the string
+        Snake case version of the string
     """
     res = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", original)
     res = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", res)
@@ -29,7 +30,13 @@ def to_float(
     It handles the ambiguity of ',' used as thousands separator.
 
     Args:
-        value: possible float as string
+        value: Value that can possibly convert a float.
+        thusands_sep: Separator used for separating thousounds,
+         for example in 100,000 the value ',' is used. It can
+         differ for different regions.
+        decimal_sep: Separator used for dividing decimal part
+         in float values, for example in 9.99 the value '.' is
+         used.
 
     Returns:
         float or null
@@ -42,21 +49,28 @@ def to_float(
 
 
 def rename(the_dict: dict[str, Any], rename_keys: dict[str, str]) -> dict[str, Any]:
-    """Rename keys in a dict. It does two things:
-    - creates a key with value of old key
-    - removes the old key
+    """Rename keys in a dict.
+    It does two things:
+    - Creates a 'new_key' with value of 'old_key'.
+    - Removes the 'old_key'.
+    It should not modify existsting dict.
+
+    Examples:
+        >>> rename({"a": 0}, {"a": "b"})
+        {'b': 0}
 
     Args:
-        the_dict: dict to be changed
-        rename_keys: dict with key mappings
+        the_dict: Dict to be changed.
+        rename_keys: Dict with key mappings.
 
     Returns:
-        new dict
+        New dict with renamed keys.
     """
+    new_dict = copy.deepcopy(the_dict)
     for old_key, new_key in rename_keys.items():
-        if old_key in the_dict:
-            the_dict[new_key] = the_dict.pop(old_key)
-    return the_dict
+        if old_key in new_dict:
+            new_dict[new_key] = new_dict.pop(old_key)
+    return new_dict
 
 
 def drop(the_dict: dict[str, Any], columns: list[str]) -> dict[str, Any]:

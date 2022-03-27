@@ -46,7 +46,6 @@ def test_parsing_company_indicators(company_indicators):
 def test_parsing_company_finance(company_finance):
     data, isin_code, execution_date = company_finance
     parsed = dimensions.parse_data(data, isin_code, "finance", execution_date)
-    print(parsed)
     assert parsed == [
         {
             "assets": 16217065.0,
@@ -56,7 +55,7 @@ def test_parsing_company_finance(company_finance):
             "current_assets": 2858246.0,
             "current_liabilities": 962997.0,
             "current_ratio": None,
-            "date": dt.date(2021, 7, 4),
+            "date": dt.date(2021, 1, 1),
             "debt_service_ratio": None,
             "depreciation": 380978.0,
             "ebitda": 1532113.0,

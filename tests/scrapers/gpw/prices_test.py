@@ -55,7 +55,7 @@ def test_parsing_realtime_equities(realtime_equities):
         "low": 2.3350,
         "high": 2.4750,
         "closing": 2.4750,
-        "timestamp": 1625349600.0,
+        "timestamp": 1609459200.0,
         "corporate_actions": "",
     }
 
@@ -75,5 +75,5 @@ def test_parsing_realtime_indices(realtime_indices):
         "value": 2252.18,
         "isin_code": "PL9999999987",
         "cumulated_value": 562248170.0,
-        "timestamp": 1625349600.0,
+        "timestamp": 1609459200.0,
     }

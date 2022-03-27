@@ -30,8 +30,8 @@ jobs:
         black --diff --check app
     
     - name: Check imports with isort
-        run: |
-          isort app --diff
+      run: |
+        isort app --diff
 
     - name: Lint with pylint
       run: |

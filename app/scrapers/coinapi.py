@@ -1,10 +1,12 @@
 """Extracts data from a coinbase API."""
+from typing import Any
 import datetime as dt
 import json
 
 import pandas as pd
-
 from airflow.providers.http.hooks.http import HttpHook
+
+from app.scrapers import base
 
 COINS = [
     "ADA",
@@ -21,6 +23,7 @@ COINS = [
 ]
 
 
+# pylint: disable=unused-argument
 def download_realtime(for_date: dt.datetime, coin_symbol: str) -> bytes:
     """Downloads current prices for a specified coin.
 
@@ -33,9 +36,8 @@ def download_realtime(for_date: dt.datetime, coin_symbol: str) -> bytes:
     """
     hook = HttpHook("GET", http_conn_id="coinapi")
     endpoint = f"v1/quotes/BINANCE_SPOT_{coin_symbol.upper()}_USDT/current"
-    resp = hook.run(endpoint)
-    data = resp.content
-    return data
+    response = hook.run(endpoint)
+    return base.extract_content(response)
 
 
 def download_data(for_date: dt.datetime, coin_symbol: str) -> bytes:
@@ -54,12 +56,13 @@ def download_data(for_date: dt.datetime, coin_symbol: str) -> bytes:
     endpoint = endpoint.format(
         coin=coin_symbol.upper(), start=for_date.date(), end=next_day.date()
     )
-    resp = hook.run(endpoint)
-    data = resp.content
-    return data
+    response = hook.run(endpoint)
+    return base.extract_content(response)
 
 
-def parse_data(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
+def parse_data(
+    data: bytes, for_date: dt.datetime, coin_symbol: str = ""
+) -> list[dict[str, Any]]:
     """Extracts data from file into correct format.
 
     Args:
@@ -71,7 +74,7 @@ def parse_data(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
         ValueError: when no coin is passed
 
     Returns:
-        final data
+        Parsed data.
     """
     if not coin_symbol:
         raise ValueError("Need to specify coin!")
@@ -91,10 +94,13 @@ def parse_data(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
     frame["date"] = for_date.date()
     frame["coin"] = coin_symbol.upper()
     frame["base"] = "USD"
-    return frame.to_dict("records")
+    return frame.to_dict("records")  # type: ignore
 
 
-def parse_realtime(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
+# pylint: disable=unused-argument
+def parse_realtime(
+    data: bytes, for_date: dt.datetime, coin_symbol: str = ""
+) -> list[dict[str, Any]]:
     """Extracts realtime data from file into correct format.
 
     Args:
@@ -127,4 +133,4 @@ def parse_realtime(data: bytes, for_date: dt.datetime, coin_symbol: str = ""):
             "time_coinapi",
         ]
     )
-    return frame.to_dict("records")
+    return frame.to_dict("records")  # type: ignore

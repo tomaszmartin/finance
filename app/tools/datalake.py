@@ -1,6 +1,6 @@
 """Functions for creating consistent naming conventions for Data Lake."""
-from functools import partial
 import logging
+from functools import partial
 
 
 def generate_file(

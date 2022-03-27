@@ -1,8 +1,11 @@
-"""Enables to extract datya from Exchangarte API."""
+"""Enables to extract data from exchangarate API."""
+from typing import Any
 import datetime as dt
 import json
 
 import requests
+
+from app.scrapers import base
 
 
 def download_data(execution_date: dt.datetime, realtime: bool = False) -> bytes:
@@ -10,7 +13,7 @@ def download_data(execution_date: dt.datetime, realtime: bool = False) -> bytes:
 
     Args:
         execution_date: for what day
-        current: if should download realtime data
+        realtime: if should download realtime data
 
     Returns:
         bytes: result
@@ -19,23 +22,22 @@ def download_data(execution_date: dt.datetime, realtime: bool = False) -> bytes:
     if realtime:
         day = dt.date.today()
     endpoint = f"https://api.exchangerate.host/{day}?base=PLN"
-    resp = requests.get(endpoint)
-    resp.raise_for_status()
-    data = resp.content
-    return data
+    response = requests.get(endpoint)
+    return base.extract_content(response)
 
 
-def parse_data(data: bytes, execution_date: dt.datetime):
+# pylint: disable=unused-argument
+def parse_data(raw_data: bytes, execution_date: dt.datetime) -> list[dict[str, Any]]:
     """Extracts data from file into correct format.
 
     Args:
-        data: data from file
+        raw_data: data from file
         execution_date: for what day data was downloaded
 
     Returns:
         final data
     """
-    json_str = data.decode("utf-8")
+    json_str = raw_data.decode("utf-8")
     parsed = json.loads(json_str)
     results = []
     for currency, rate in parsed["rates"].items():

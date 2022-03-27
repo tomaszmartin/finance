@@ -2,8 +2,8 @@
 from typing import Optional
 
 
-def replace_in_transaction(
-    dataset_id: str, dest_table: str, src_table: str, delete_using: str
+def overwrite_in_transaction(
+    dataset_id: str, dest_table: str, src_table: str, overwrite_using: str
 ) -> str:
     """Creates a replace query for BigQuery where data from
     destination table is replaced from the data in temp table
@@ -12,8 +12,8 @@ def replace_in_transaction(
     return f"""
         BEGIN
             BEGIN TRANSACTION;
-            DELETE FROM `{dataset_id}.{dest_table}` WHERE {delete_using} IN (
-                SELECT DISTINCT({delete_using}) FROM `{dataset_id}.{src_table}`
+            DELETE FROM `{dataset_id}.{dest_table}` WHERE {overwrite_using} IN (
+                SELECT DISTINCT({overwrite_using}) FROM `{dataset_id}.{src_table}`
             );
             INSERT INTO `{dataset_id}.{dest_table}` SELECT * FROM `{dataset_id}.{src_table}`;
             COMMIT TRANSACTION;
@@ -30,7 +30,7 @@ def distinct(
     table_id: str,
     where: Optional[str] = None,
     groupby: Optional[str] = None,
-):
+) -> str:
     qry = f"""
         SELECT 
         CASE
@@ -53,7 +53,7 @@ def count_in_time(
     first_date: str = "{{ ds }}",
     second_date: str = "{{ prev_ds }}",
     margin: float = 0.1,
-):
+) -> str:
     return f"""
         WITH today AS (
             SELECT COUNT({column}) AS cnt

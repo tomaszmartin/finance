@@ -44,7 +44,9 @@ def mocked_bq_call(request, db_session):
 @pytest.mark.parametrize("mocked_bq_call", [False], indirect=True)
 def test_execute_validates_errors(mocked_bq_call):
     query = "SELECT * FROM test"
-    task = BigQueryValidateDataOperator(task_id="query", gcp_conn_id="conn", sql=query)
+    task = BigQueryValidateDataOperator(
+        task_id="query", gcp_conn_id="conn", query=query
+    )
     with pytest.raises(AssertionError):
         task.execute(context={})
 
@@ -54,7 +56,7 @@ def test_execute_validates_pass(mocked_bq_call):
     try:
         query = "SELECT * FROM test"
         task = BigQueryValidateDataOperator(
-            task_id="query", gcp_conn_id="conn", sql=query
+            task_id="query", gcp_conn_id="conn", query=query
         )
         task.execute(context={})
     except AssertionError:
