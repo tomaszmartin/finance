@@ -1,7 +1,7 @@
 import re
 
 from hypothesis import given, strategies as sn
-from app import utils
+from app.tools import utils
 
 
 @given(chars=sn.characters())

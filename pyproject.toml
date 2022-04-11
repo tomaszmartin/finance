@@ -26,3 +26,9 @@ ignore-comments = "yes"
 ignore-docstrings = "yes"
 ignore-imports = "yes"
 min-similarity-lines = 10
+
+[tool.mutmut]
+paths_to_mutate = "app/"
+backup = false
+runner = "python -m pytest"
+tests_dir = "tests/"

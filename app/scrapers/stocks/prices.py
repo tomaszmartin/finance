@@ -7,7 +7,7 @@ from urllib.parse import parse_qs
 import requests
 from bs4 import BeautifulSoup
 
-from app import utils
+from app.tools import utils
 from app.scrapers import base
 
 

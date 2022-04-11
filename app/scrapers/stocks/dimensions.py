@@ -5,7 +5,7 @@ from typing import Any, Optional
 import requests
 from bs4 import BeautifulSoup
 
-from app import utils
+from app.tools import utils
 from app.scrapers import base
 
 
