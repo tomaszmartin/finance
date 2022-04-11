@@ -31,11 +31,15 @@ jobs:
     
     - name: Check imports with isort
       run: |
-        isort app --diff
+        isort app --check-only
 
     - name: Lint with pylint
       run: |
         pylint app
+      
+    - name: Check mypy
+      run: |
+        mypy app
     
     - name: Test with pytest
       run: |
