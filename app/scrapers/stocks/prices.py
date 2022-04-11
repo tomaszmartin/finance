@@ -7,8 +7,8 @@ from urllib.parse import parse_qs
 import requests
 from bs4 import BeautifulSoup
 
-from app.tools import utils
 from app.scrapers import base
+from app.tools import utils
 
 
 def get_archive(instrument: str, execution_date: dt.date) -> bytes:

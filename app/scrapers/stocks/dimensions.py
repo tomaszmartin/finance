@@ -5,8 +5,8 @@ from typing import Any, Optional
 import requests
 from bs4 import BeautifulSoup
 
-from app.tools import utils
 from app.scrapers import base
+from app.tools import utils
 
 
 def get_data(isin_code: str, fact_type: str) -> bytes:

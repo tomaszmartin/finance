@@ -1,7 +1,7 @@
 """Enables to extract data from exchangarate API."""
-from typing import Any
 import datetime as dt
 import json
+from typing import Any
 
 import requests
 

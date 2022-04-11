@@ -1,7 +1,7 @@
 """Extracts data from a coinbase API."""
-from typing import Any
 import datetime as dt
 import json
+from typing import Any
 
 import pandas as pd
 from airflow.providers.http.hooks.http import HttpHook
