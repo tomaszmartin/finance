@@ -27,6 +27,12 @@ ignore-docstrings = "yes"
 ignore-imports = "yes"
 min-similarity-lines = 10
 
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.basic]
+no-docstring-rgx = "^_"
+
 [tool.mutmut]
 paths_to_mutate = "app/"
 backup = false

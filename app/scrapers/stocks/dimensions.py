@@ -27,7 +27,7 @@ def get_data(isin_code: str, fact_type: str) -> bytes:
         "indicators": "indicatorsTab",
         "finance": "showNotoria",
     }
-    if fact_type not in tabs.keys():
+    if fact_type not in tabs:
         raise ValueError(f"Unknown fact type {fact_type}!")
     endpoint = (
         f"https://www.gpw.pl/ajaxindex.php?start={tabs[fact_type]}"
