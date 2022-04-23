@@ -22,7 +22,7 @@ with DAG(
         check_distinct = BigQueryValidateDataOperator(
             task_id=f"check_distinct_{TABLE_ID}",
             gcp_conn_id=config.GCP_CONN_ID,
-            query=sql.distinct(
+            query=sql.is_distinct(
                 column="isin_code",
                 table_id=TABLE_ID,
                 where="date >= '{{ execution_date.subtract(days=30).date() }}'",

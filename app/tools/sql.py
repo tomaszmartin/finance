@@ -25,7 +25,7 @@ def overwrite_in_transaction(
     """
 
 
-def distinct(
+def is_distinct(
     column: str,
     table_id: str,
     where: Optional[str] = None,

@@ -17,6 +17,23 @@ def test_to_bytes(ext, bytes_data):
     assert result == bytes_data
 
 
+@pytest.mark.parametrize(
+    "ext,bytes_data",
+    [
+        ("json", b'[{"a": true, "b": false}]'),
+        ("jsonl", b'{"a": true, "b": false}'),
+    ],
+)
+def test_to_bytes_key_order(ext, bytes_data):
+    """Checks whether saving to 'json' or 'jsonl'
+    orders keys.
+    """
+    filename = f"test.{ext}"
+    data = [{"b": False, "a": True}]
+    result = files.to_bytes(filename, data)
+    assert result == bytes_data
+
+
 def test_to_bytes_bad_format():
     filename = "test.error"
     data = [{"test": True}, {"test": False}]
