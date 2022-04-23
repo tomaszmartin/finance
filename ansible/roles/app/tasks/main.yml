@@ -13,7 +13,7 @@
   become: true
   become_user: "{{ app_user }}"
   synchronize:
-    src: "./app/"
+    src: "{{ local_home }}/app/"
     dest: "{{ app_home }}/app/"
   tags: app
 

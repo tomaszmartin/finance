@@ -1,5 +1,6 @@
 ---
 python_version: 3.9
+local_home: ./../
 app_home: /apps/stocks
 app_venv: "{{app_home}}/env"
 app_user: airflow
